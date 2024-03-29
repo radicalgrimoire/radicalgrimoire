@@ -10,11 +10,11 @@ https://www.gamestudio.co.jp/
 
 # track record
 
-Colorectal cancer (2019)  
-Colorectal cancer recurrence (2021)  
-Google account ban 1 time (2022)  
-Purchased a car 1 time (2023)  
-Scratch the side mirror of my car (2024)  
+* Colorectal cancer (2019)  
+* Colorectal cancer recurrence (2021)  
+* Google account ban 1 time (2022)  
+* Purchased a car 1 time (2023)  
+* Scratch the side mirror of my car (2024)  
 
 # SNS
 
