@@ -1,0 +1,38 @@
+#--------------------------------------------------------------
+# Redmine docker-compose
+#--------------------------------------------------------------
+version: '3'
+
+#---NETWORKS---------------------------------------------------
+networks:
+  default:
+    external:
+      name: common
+
+#---VOLUMES ---------------------------------------------------
+volumes:
+  data:
+  mysql:
+  mysqld:
+
+#---SERVICES---------------------------------------------------
+services:
+  redmine:
+    build: ./redmine
+    depends_on:
+      - mysql
+    ports:
+      - "10443:443"
+      - '14080:80'
+    volumes:
+      - 'data:/home/redmine/data'
+    env_file:
+      - 'redmine.env'
+
+  mysql:
+    image: 'sameersbn/mysql:latest'
+    volumes:
+      - 'mysql:/var/lib/mysql'
+      - 'mysqld:/run/mysqld'
+    env_file:
+      - 'mysql.env'

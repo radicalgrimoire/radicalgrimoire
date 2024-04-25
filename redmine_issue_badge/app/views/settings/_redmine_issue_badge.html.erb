@@ -1,0 +1,18 @@
+<div class="form-inline issue_badge">
+  <p>
+    <%=content_tag(:label, l(:label_activate_for_all_users))%>
+    <%= hidden_field_tag("settings[activate_for_all_users]", 0, :id => nil).html_safe %>
+    <%= check_box_tag 'settings[activate_for_all_users]', true, @settings['activate_for_all_users'] == "true" %>
+  </p>
+  <p>
+    <%=content_tag(:label, l(:label_enabled_polling))%>
+    <%= hidden_field_tag("settings[enabled_polling]", 0, :id => nil).html_safe %>
+    <%= check_box_tag 'settings[enabled_polling]', true, @settings['enabled_polling'] == "true" %>
+  </p>
+
+  <p>
+    <%=content_tag(:label, l(:label_number_to_display, default: 'Issue number to display in the popup'))%>
+    <%= select_tag('settings[number_to_display]',
+                 options_for_select([5, 10, 15, 20],@settings['number_to_display'])) %>
+  </p>
+</div>

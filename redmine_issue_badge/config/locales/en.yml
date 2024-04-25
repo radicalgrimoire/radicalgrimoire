@@ -1,0 +1,13 @@
+# English strings go here for Rails i18n
+en:
+  title_issue_badge: Issue Badge
+  label_issue_badge: Show number of assigned issues with badge.
+  label_activate_for_all_users: Display issue badge for all users
+  label_enabled_polling: Enabled pollig to refresh issue count（Interval 60sec）
+  label_show_assigned_to_group: Include issue numbers assigned to group
+  label_badge_order: List order
+  label_badge_order_oldest: "Oldest %{value} issues"
+  label_badge_order_newest: "Newest %{value} issues"
+  label_use_custom_query: Use custom queries
+  invalid_query_id: Invalid custom query id is specified.
+  label_number_to_display: Issue number to display in the popup

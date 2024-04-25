@@ -1,0 +1,16 @@
+<%= javascript_tag do %>
+  $("#licenseDialog").dialog({
+    autoOpen: false,
+    modal: true,
+    width: 850,
+    height: 600,
+    title: "<%= l(:label_plugin_license_title) %>"
+  });
+  $('#licenseLink').click(function() {
+    $('#licenseDialog').dialog('open');
+    return(false);
+  });
+  function resizeIframe(obj) {
+    obj.style.height = (obj.contentWindow.document.body.scrollHeight - 20) + 'px';
+  }
+<% end %>

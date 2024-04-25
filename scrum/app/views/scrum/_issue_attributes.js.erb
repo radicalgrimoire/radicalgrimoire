@@ -1,0 +1,40 @@
+<%- if issue.field?(:estimated_hours) and
+    issue.is_task? and
+    User.current.allowed_to?(:edit_pending_effort, issue.project) -%>
+  <%= javascript_tag do %>
+    var changeEstimatedHours = !$("#issue_estimated_hours").val();
+    var changePendingEffort = !$("#issue_pending_effort").val();
+    $("#issue_estimated_hours").change(function() {
+      if (changePendingEffort && $("#issue_estimated_hours").val()) {
+        $("#issue_pending_effort").val($("#issue_estimated_hours").val());
+      }
+    });
+    $("#issue_pending_effort").change(function() {
+      if (changeEstimatedHours && $("#issue_pending_effort").val()) {
+        $("#issue_estimated_hours").val($("#issue_pending_effort").val());
+      }
+    });
+  <% end %>
+<%- end -%>
+
+<%= javascript_tag do %>
+  $('#ajax-modal').on('click', 'div.jstTabs a.tab-preview', function(event){
+    var tab = $(event.target);
+
+    var url = tab.data('url');
+    var form = tab.parents('form');
+    var jstBlock = tab.parents('.jstBlock');
+
+    var element = encodeURIComponent(jstBlock.find('.wiki-edit').val());
+    var attachments = form.find('.attachments_fields input').serialize();
+
+    $.ajax({
+      url: url,
+      type: 'post',
+      data: "text=" + element + '&' + attachments,
+      success: function(data){
+        jstBlock.find('.wiki-preview').html(data);
+      }
+    });
+  });
+<% end %>

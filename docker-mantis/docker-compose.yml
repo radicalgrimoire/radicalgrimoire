@@ -1,0 +1,41 @@
+version: "3.9"
+
+networks:
+  default:
+    external:
+      name: common
+
+volumes:
+  db-data:
+  mantisbt-data:
+  mantisbt-opt:
+
+services:
+  mantisbt:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: mantisbtmariadb
+    container_name: "mantisbt"
+    volumes:
+      - "mantisbt-data:/var/mantisbt"
+      - "mantisbt-opt:/opt/mantisbt"
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mariadb:latest
+    ports:
+      - "3306:3306"
+    volumes:
+      - "db-data:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: mantisbt
+      MYSQL_DATABASE: mantisbt
+      MYSQL_USER: mantisbt
+      MYSQL_PASSWORD: mantisbt
+    restart: always
+
