@@ -3,6 +3,10 @@
 
 Ueno Souhei (radicalgrimoire)
 
+# tell
+
+https://github.com/radicalgrimoire/radicalgrimoire/discussions
+
 # workplace
 
 GameStudio.inc  
