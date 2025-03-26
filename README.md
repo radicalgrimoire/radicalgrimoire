@@ -18,7 +18,8 @@ https://www.gamestudio.co.jp/
 * Colorectal cancer recurrence (2021)  
 * Google account ban 1 time (2022)  
 * Purchased a car 1 time (2023)  
-* Scratch the side mirror of my car (2024)  
+* Scratch the side mirror of my car (2024)
+* I have a thought that Google hates (2025)
 
 # SNS
 
