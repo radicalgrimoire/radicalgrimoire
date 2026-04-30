@@ -1,4 +1,4 @@
-![01_サーバーアクセス01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/main/images/01_サーバーアクセス01.png)
+﻿![01_server-access-01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/main/images/01_server-access-01.png)
 
 ### ■ Server
 
@@ -14,7 +14,7 @@ Perforceアカウントを入力する
 
 
 ## Trust This Fingerprintが表示されたら…？
-![２ログイン画面.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/main/images/２ログイン画面.png)
+![02_login-screen.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/main/images/02_login-screen.png)
 
 Trust This Fingerprintにチェックを入れて、OKを押す
 

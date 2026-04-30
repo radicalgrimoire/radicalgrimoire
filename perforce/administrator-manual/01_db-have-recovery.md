@@ -2,7 +2,7 @@
 
 error で ワークスペースに関する操作ができなくなった  
 
-![error.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/01_db.haveの復旧01.png)
+![error.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/01_db-have-recovery-01.png)
 
 ベンダー会社に問い合わせた所、  
 「エラーの内容の通りdb.haveが破損していると思われる」との回答
