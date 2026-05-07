@@ -1,4 +1,4 @@
-﻿# 1. インストーラーの入手
+# 1. インストーラーの入手
 
 https://www.perforce.com/downloads/helix-visual-client-p4v
 

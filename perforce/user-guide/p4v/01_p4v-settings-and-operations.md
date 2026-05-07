@@ -1,4 +1,4 @@
-﻿## 文字コードの設定
+## 文字コードの設定
 
 ### ■ Environment Settings の確認
 
