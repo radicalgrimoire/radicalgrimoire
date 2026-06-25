@@ -1,0 +1,2 @@
+github mcp サーバー
+https://github.blog/ai-and-ml/github-copilot/meet-the-github-mcp-registry-the-fastest-way-to-discover-mcp-servers/
