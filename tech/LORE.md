@@ -22,7 +22,7 @@
 
 ### test という名称のリポジトリを作成する
 
-> PS D:\> lore repository create lore://127.0.0.1:41337/test
+> PS D:\> lore repository create lore://127.0.0.1:41337/test  
 > Created repository test in D:/ with ID 019ef76f0d027753b1af0286c57cde4e
 
 ### リポジトリ確認
