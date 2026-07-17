@@ -4,6 +4,10 @@
 - https://epicgames.github.io/lore/
 - https://github.com/EpicGames/lore
 
+# インスコ
+
+> curl -fsSL https://raw.githubusercontent.com/EpicGames/lore/main/scripts/install.sh | bash -s -- --install-dir <install folder> --server
+
 # LORE CLI
 
 > # PowerShellで実行
