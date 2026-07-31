@@ -4,6 +4,33 @@
 - https://epicgames.github.io/lore/
 - https://github.com/EpicGames/lore
 
+# インスコ
+
+> curl -fsSL https://raw.githubusercontent.com/EpicGames/lore/main/scripts/install.sh | bash -s -- --install-dir {install folder}--server
+
+```
+[Unit]
+Description=Lore Server
+After=network.target
+
+[Service]
+Type=simple
+User=user
+Group=user
+Environment=RUST_LOG=info
+Environment=LORE_ENV=dev
+Environment=LORE_CONFIG_PATH=/datadrive2/lore/config
+ExecStart=/datadrive2/lore/bin/loreserver
+WorkingDirectory=/datadrive2/lore
+LimitNOFILE=1048576
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+
 # LORE CLI
 
 > # PowerShellで実行
