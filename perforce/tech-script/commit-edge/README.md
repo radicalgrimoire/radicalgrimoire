@@ -24,7 +24,7 @@
 
 ```sh
 export P4ROOT=/srv/perforce/commit/root
-export P4PORT=ssl:commit.example.com:1666
+export P4PORT=ssl:commit-server:1666
 
 bash preflight.sh --role commit
 ```
@@ -35,18 +35,18 @@ bash preflight.sh --role commit
 
 ```sh
 export P4ROOT=/srv/perforce/edge/root
-export P4PORT=ssl:edge.example.com:1666
+export P4PORT=ssl:edge-server:1666
 
 bash preflight.sh \
   --role edge \
-  --target ssl:commit.example.com:1666
+  --target ssl:commit-server:1666
 ```
 
 ### 起動済みエッジの検証
 
 ```sh
 bash validate-edge.sh \
-  --p4port ssl:edge.example.com:1666 \
+  --p4port ssl:edge-server:1666 \
   --expected-server-id tokyo_edge
 ```
 
@@ -54,7 +54,7 @@ bash validate-edge.sh \
 
 ```sh
 bash validate-edge.sh \
-  --p4port ssl:edge.example.com:1666 \
+  --p4port ssl:edge-server:1666 \
   --skip-pull-status
 ```
 

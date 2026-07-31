@@ -4,6 +4,8 @@
 
 この文書は、既存の単一 P4 Server をコミットサーバーに移行し、エッジサーバーを1台追加する場合の手順です。2026-07-31 時点の [P4 Server Administrator Guide](https://help.perforce.com/helix-core/server-apps/p4sag/current/Content/P4SAG/commit-edge-setting-up.html) を基にしています。実施前に、利用する p4d リリースの公式ドキュメントを必ず確認してください。
 
+この手順は SSL/TLS を使う構成を前提としています。SSL/TLS を使わない構成には対応していません。
+
 ## 構成と用語
 
 | 用語 | 役割 |
@@ -34,15 +36,15 @@ SSL/TLS を使う場合、エッジには自身の証明書と秘密鍵に加え
 コミットサーバー側で、コミット用とエッジ用にそれぞれ固有の `service` ユーザーを作成します。サービスユーザーはライセンスを消費せず、サーバー間認証に使われます。
 
 ```sh
-p4 -u super user -f <commit-service-user>
-p4 -u super user -f <edge-service-user>
+p4 -u super user -f commit-service
+p4 -u super user -f edge-service
 ```
 
 開いたユーザー仕様で、それぞれ `Type: service` を設定します。強いパスワードを設定します。
 
 ```sh
-p4 -u super passwd <commit-service-user>
-p4 -u super passwd <edge-service-user>
+p4 -u super passwd commit-service
+p4 -u super passwd edge-service
 ```
 
 サービスユーザーは専用グループに入れます。2025.2 以降では service ユーザーのチケットは既定で無期限です。2025.1 以前では、`Timeout:` と `PasswordTimeout:` を `unlimited` にして、チケット期限で複製が停止しないようにします。
@@ -52,8 +54,8 @@ Group: serviceusergroup
 Timeout: unlimited
 PasswordTimeout: unlimited
 Users:
-	<commit-service-user>
-	<edge-service-user>
+	commit-service
+	edge-service
 ```
 
 複製を正常に動作させるため、公式手順に従いサービスユーザーグループへ `super` 権限を付与します。これは通常の利用者をこのグループへ入れないことが前提です。既存の保護テーブルを確認し、既存ルールを消さずに追記します。
@@ -68,23 +70,25 @@ Protections:
 既存サーバーにコミットサーバー用のサーバー仕様を作成し、その ID を設定します。`Services: commit-server` を保存するとデータベースのアップグレードが発生する場合があるため、保守時間中にバックアップを取得して実施します。
 
 ```sh
-p4 server -c commit-server <commit-server-id>
-p4 serverid <commit-server-id>
+p4 server -c commit-server tokyo_commit
+p4 serverid tokyo_commit
 ```
+
+この例では、`tokyo_commit` というコミットサーバーの仕様を作成し、現在の p4d にそのサーバー ID を設定します。
 
 `DistributedConfig:` には少なくとも次を環境に合わせて設定します。
 
 ```text
 DistributedConfig:
-	serviceUser=<commit-service-user>
+	serviceUser=commit-service
 	monitor=2
-	journalPrefix=<commit-backup-prefix>
-	P4TICKETS=<commit-p4root>/.p4tickets
-	P4LOG=<commit-log-path>
-	P4TRUST=<commit-p4root>/.p4trust
+	journalPrefix=/srv/perforce/commit/checkpoints/p4_
+	P4TICKETS=/srv/perforce/commit/root/.p4tickets
+	P4LOG=/srv/perforce/commit/logs/p4d.log
+	P4TRUST=/srv/perforce/commit/root/.p4trust
 ```
 
-`journalPrefix` はチェックポイントとローテーション済みジャーナルの保存場所を指します。エッジがメタデータを複製するため、コミットサーバー上のローテーション済みジャーナルを参照できる必要があります。SSL/TLS を使わない場合、`P4TRUST` は不要です。
+この例では、`P4ROOT` に `/srv/perforce/commit/root`、チェックポイントとローテーション済みジャーナルに `/srv/perforce/commit/checkpoints/`、p4d のログに `/srv/perforce/commit/logs/p4d.log` を使います。
 
 マルチサーバー構成では、公式手順はチケット認証を必須にする `security=4` を案内しています。これは全体の認証動作に影響するため、既存のクライアント・自動処理への影響を確認してから設定します。
 
@@ -97,10 +101,12 @@ p4 configure set security=4
 コミットサーバー上でエッジサーバーの仕様を作成します。
 
 ```sh
-p4 server -c edge-server <edge-server-id>
+p4 server -c edge-server tokyo_edge
 ```
 
-`ExternalAddress:` には、コミットサーバーからエッジへ到達するアドレスを設定します。クライアント向けとサーバー間通信用にネットワークが分かれる場合は、特にこの値を確認してください。SSL/TLS を使うなら `ssl:<host>:<port>` の形式です。
+この例では、`tokyo_edge` というエッジサーバーの仕様を作成します。後続の `p4d -P` と `p4d -xD` にも `tokyo_edge` を指定します。
+
+`ExternalAddress:` には、コミットサーバーからエッジへ到達する `ssl:edge-server:1666` を設定します。
 
 `DistributedConfig:` の基準例は次のとおりです。
 
@@ -112,13 +118,13 @@ DistributedConfig:
 	startup.1=pull -i 1
 	startup.2=pull -u -i 1
 	startup.3=pull -u -i 1
-	P4TARGET=<commit-protocol>:<commit-host>:<commit-port>
-	serviceUser=<edge-service-user>
+	P4TARGET=ssl:commit-server:1666
+	serviceUser=edge-service
 	monitor=1
-	journalPrefix=<edge-backup-prefix>
-	P4TICKETS=<edge-p4root>/.p4tickets
-	P4LOG=<edge-log-path>
-	P4TRUST=<edge-p4root>/.p4trust
+	journalPrefix=/srv/perforce/edge/checkpoints/p4_
+	P4TICKETS=/srv/perforce/edge/root/.p4tickets
+	P4LOG=/srv/perforce/edge/logs/p4d.log
+	P4TRUST=/srv/perforce/edge/root/.p4trust
 ```
 
 `startup.1` はメタデータ、`startup.2` と `startup.3` は versioned files の pull を開始します。リモート拠点では `rpl.compress=4` が推奨されます。近接した拠点では、帯域と CPU 使用率を確認して圧縮を外すこともできます。pull スレッド数や間隔は、転送量と負荷を測定して調整します。
@@ -127,7 +133,7 @@ DistributedConfig:
 
 ### フィルター済みチェックポイントを作成する
 
-エッジの初期化には、エッジ用にフィルターしたコミットサーバーのデータベースを使います。`-K` にテーブル一覧を手入力するのではなく、サーバー ID を指定する `-P <edge-server-id>` を使います。
+エッジの初期化には、エッジ用にフィルターしたコミットサーバーのデータベースを使います。`-K` にテーブル一覧を手入力するのではなく、サーバー ID を指定する `-P tokyo_edge` を使います。
 
 2025.1 以降では、対象バージョンで除外されるテーブルを次のコマンドで確認できます。
 
@@ -138,7 +144,7 @@ p4d -R edge-server -jd -l
 コミットサーバーで、エッジ用チェックポイントを作成します。
 
 ```sh
-p4d -r <commit-p4root> -P <edge-server-id> -z -jd edge.ckp
+p4d -r /srv/perforce/commit/root -P tokyo_edge -z -jd edge.ckp
 ```
 
 生成された `edge.ckp.gz` をエッジサーバーへ安全に転送します。初期化にはデータベースだけでなく、コミットサーバーの versioned files も必要です。
@@ -148,36 +154,36 @@ p4d -r <commit-p4root> -P <edge-server-id> -z -jd edge.ckp
 エッジサーバーでチェックポイントを展開し、サーバー ID を設定します。
 
 ```sh
-p4d -r <edge-p4root> -z -jr edge.ckp.gz
-p4d -r <edge-p4root> -xD <edge-server-id>
+p4d -r /srv/perforce/edge/root -z -jr edge.ckp.gz
+p4d -r /srv/perforce/edge/root -xD tokyo_edge
 ```
 
-続けて、コミットサーバーの各 depot の versioned files をエッジの対応する場所へコピーします。`p4 depots` と `p4 depot -o <depot>` の `Map:` で保存先を確認します。`rsync` など、ファイル属性とディレクトリ構造を保持できる方法を使います。
+続けて、コミットサーバーの各 depot の versioned files をエッジの対応する場所へコピーします。`p4 depots` で depot 一覧を確認し、各 depot に対して `p4 depot -o <depot-name>` の `Map:` で保存先を確認してコピーします。次は `depot` という名前の depot の例です。`rsync` など、ファイル属性とディレクトリ構造を保持できる方法を使います。
 
 ```sh
-rsync -avz <commit-p4root>/depot/ <edge-host>:<edge-p4root>/depot/
+rsync -avz /srv/perforce/commit/root/depot/ edge-server:/srv/perforce/edge/root/depot/
 ```
 
 データ量が大きい場合は、事前コピー後に差分コピーを実行して停止時間を短くできます。
 
 ## 5. 相互認証を設定して起動する
 
-SSL/TLS を使うエッジは、自身の `P4SSLDIR` に証明書と秘密鍵を持たせます。そのうえで、エッジのサービスユーザーがコミットサーバーを trust してログインします。
+エッジは自身の `P4SSLDIR` に証明書と秘密鍵を持たせます。そのうえで、エッジのサービスユーザーがコミットサーバーを trust してログインします。
 
 ```sh
-export P4TRUST=<edge-p4root>/.p4trust
-export P4TICKETS=<edge-p4root>/.p4tickets
-p4 -u <edge-service-user> -p ssl:<commit-host>:<commit-port> trust
-p4 -u <edge-service-user> -p ssl:<commit-host>:<commit-port> login
+export P4TRUST=/srv/perforce/edge/root/.p4trust
+export P4TICKETS=/srv/perforce/edge/root/.p4tickets
+p4 -u edge-service -p ssl:commit-server:1666 trust
+p4 -u edge-service -p ssl:commit-server:1666 login
 ```
 
 さらに、コミットサーバーのサービスユーザーもエッジサーバーを trust してログインします。エッジからの並列 submit や shelve では、コミット側がエッジへ接続するため、この設定が必要です。
 
 ```sh
-export P4TRUST=<commit-p4root>/.p4trust
-export P4TICKETS=<commit-p4root>/.p4tickets
-p4 -u <commit-service-user> -p ssl:<edge-host>:<edge-port> trust
-p4 -u <commit-service-user> -p ssl:<edge-host>:<edge-port> login
+export P4TRUST=/srv/perforce/commit/root/.p4trust
+export P4TICKETS=/srv/perforce/commit/root/.p4tickets
+p4 -u commit-service -p ssl:edge-server:1666 trust
+p4 -u commit-service -p ssl:edge-server:1666 login
 ```
 
 通常運用で使う `p4dctl`、systemd、またはコンテナのサービス管理方法でエッジを起動します。初期構築時だけ手動で `p4d -d` を使う場合も、以後の起動方法と混在させないでください。
@@ -187,7 +193,7 @@ p4 -u <commit-service-user> -p ssl:<edge-host>:<edge-port> login
 エッジ上で次を確認します。
 
 ```sh
-p4 -p <edge-protocol>:<edge-host>:<edge-port> info
+p4 -p ssl:edge-server:1666 info
 p4 pull -lj
 ```
 
