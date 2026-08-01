@@ -1,0 +1,78 @@
+name: Check Schedule Day
+
+on:
+  workflow_call:
+    inputs:
+      schedule_type:
+        description: 'Schedule type (weekly or monthly)'
+        required: true
+        default: 'weekly'
+        type: string
+      target_value:
+        description: 'Target value: day of week (1=Monday...) for week, date (1-31, "last") for month'
+        required: true
+        default: '1'
+        type: string
+      timezone:
+        description: 'Timezone for day check'
+        required: false
+        default: 'Asia/Tokyo'
+        type: string
+    outputs:
+      should-push:
+        description: 'Whether should push based on schedule/manual trigger'
+        value: ${{ jobs.check-day.outputs.should-push }}
+
+jobs:
+  check-day:
+    runs-on: ubuntu-latest
+    outputs:
+      should-push: ${{ steps.check.outputs.should-push }}
+    steps:
+      - name: Check if should push
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should-push=true" >> $GITHUB_OUTPUT
+            echo "Manual execution - pushing enabled"
+          elif [ "${{ github.event_name }}" = "schedule" ]; then
+            SCHEDULE_TYPE="${{ inputs.schedule_type }}"
+            TZ='${{ inputs.timezone }}'
+            TARGET_VALUE="${{ inputs.target_value }}"
+            if [ "$SCHEDULE_TYPE" = "weekly" ]; then
+              DAY_OF_WEEK=$(TZ="$TZ" date +%u)
+              if [ "$DAY_OF_WEEK" = "$TARGET_VALUE" ]; then
+                echo "should-push=true" >> $GITHUB_OUTPUT
+                echo "Weekly schedule: target day ($TARGET_VALUE) - pushing enabled"
+              else
+                echo "should-push=false" >> $GITHUB_OUTPUT
+                echo "Weekly schedule: not target day ($TARGET_VALUE) - pushing disabled"
+              fi
+            elif [ "$SCHEDULE_TYPE" = "monthly" ]; then
+              DATE=$(TZ="$TZ" date +%d)
+              LAST_DATE=$(TZ="$TZ" date -d "$(date +%Y-%m-01) +1 month -1 day" +%d)
+              DATE_MATCH=false
+              if [ "$TARGET_VALUE" = "last" ]; then
+                if [ "$DATE" = "$LAST_DATE" ]; then
+                  DATE_MATCH=true
+                fi
+              else
+                if [ "$DATE" = "$TARGET_VALUE" ]; then
+                  DATE_MATCH=true
+                fi
+              fi
+              if [ "$DATE_MATCH" = "true" ]; then
+                echo "should-push=true" >> $GITHUB_OUTPUT
+                echo "Monthly schedule: target date ($TARGET_VALUE) - pushing enabled"
+              else
+                echo "should-push=false" >> $GITHUB_OUTPUT
+                echo "Monthly schedule: not target date ($TARGET_VALUE) - pushing disabled"
+              fi
+            else
+              echo "should-push=false" >> $GITHUB_OUTPUT
+              echo "Unknown schedule type ($SCHEDULE_TYPE) - pushing disabled"
+            fi
+          else
+            echo "should-push=true" >> $GITHUB_OUTPUT
+            echo "Other event - pushing enabled"
+          fi
