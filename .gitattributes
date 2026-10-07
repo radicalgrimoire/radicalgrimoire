@@ -4,3 +4,5 @@
 /scripts/lore-git-backup/*.timer text eol=lf
 /scripts/lore-git-backup/*.md text eol=lf
 /scripts/lore-git-backup/config.env.example text eol=lf
+/tech/LORE.md text eol=lf
+/tech/lore-*.md text eol=lf
