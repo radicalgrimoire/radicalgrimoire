@@ -1,0 +1,287 @@
+# Hands-on Quickstart
+
+[日本語](hands-on-quickstart.ja.md)
+
+This page walks through a no-IdP setup that runs the bridge, `loreserver`, and the `lore` CLI, then verifies repository creation and clone.
+
+This no-IdP path is self-contained; the prerequisites are listed below and no other setup page is required first.
+
+It does not use an external IdP.
+
+Instead, it issues an authn token with `lore-authctl token mint-authn`.
+
+For IdP login, see [Identity Providers](identity-providers.md).
+
+For production port exposure, backups, logs, and recovery, read [Operations](operations.md) after completing the quickstart.
+
+## Prerequisites
+
+This quickstart needs `lore` and `loreserver` on `PATH`.
+
+Use the binaries from your organization's Lore distribution, or use the Lore project release and install paths documented in the Lore source tree.
+
+The referenced Lore docs list <https://github.com/EpicGames/lore/releases>, `scripts/install.sh`, and `scripts/install.ps1` as distribution entry points.
+
+To build both binaries from a Lore source checkout, run this from the Lore repository root:
+
+```bash
+cargo build --release -p lore-client --bin lore -p lore-server --bin loreserver
+export PATH="$PWD/target/release:$PATH"
+```
+
+On Windows, add the directory containing `target\release\lore.exe` and `target\release\loreserver.exe` to `PATH`.
+
+This bridge has been verified with real `lore` / `loreserver` 0.8.4+283 binaries.
+
+```bash
+which lore
+which loreserver
+
+cargo build --release
+export PATH="$PWD/target/release:$PATH"
+```
+
+## Quickstart Directory
+
+```bash
+mkdir -p .quickstart/{keys,grpc,data,loreconfig,home}
+```
+
+## TLS
+
+Use `mkcert` when it is available.
+
+```bash
+mkcert -cert-file .quickstart/grpc/tls.crt -key-file .quickstart/grpc/tls.key localhost 127.0.0.1
+export TRUST_CERT_FILE="$(mkcert -CAROOT)/rootCA.pem"
+export SSL_CERT_FILE="$TRUST_CERT_FILE"
+```
+
+If `mkcert` is unavailable, use a self-signed certificate.
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -subj "/CN=localhost" \
+  -addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+  -keyout .quickstart/grpc/tls.key \
+  -out .quickstart/grpc/tls.crt \
+  -days 1
+
+export TRUST_CERT_FILE="$PWD/.quickstart/grpc/tls.crt"
+export SSL_CERT_FILE="$TRUST_CERT_FILE"
+```
+
+Save the environment variables so the same values can be reused in other terminals.
+
+```bash
+cat > .quickstart/env <<EOF
+export PATH="$PWD/target/release:\$PATH"
+export TRUST_CERT_FILE="$TRUST_CERT_FILE"
+export SSL_CERT_FILE="$TRUST_CERT_FILE"
+export LORE_CONFIG_PATH="$PWD/.quickstart/loreconfig"
+export LORE_ENV=e2e
+export HOME="$PWD/.quickstart/home"
+EOF
+```
+
+## bridge config
+
+```bash
+cat > .quickstart/lore-auth.yaml <<'YAML'
+server:
+  listen: "127.0.0.1:8080"
+  grpc_listen: "127.0.0.1:8081"
+  grpc_tls_cert_file: ".quickstart/grpc/tls.crt"
+  grpc_tls_key_file: ".quickstart/grpc/tls.key"
+  public_base_url: "http://localhost:8080"
+
+database:
+  path: ".quickstart/lore-auth.sqlite3"
+
+jwt:
+  issuer: "http://localhost:8080"
+  audience:
+    - "lore-service"
+    - "localhost"
+  ttl_seconds: 3600
+  signing_key_dir: ".quickstart/keys"
+  active_kid: "manual-1"
+
+lore:
+  default_remote_url: "lore://localhost:41337"
+  auth_url: "https://localhost:8081"
+
+security:
+  device_code_ttl_seconds: 600
+  device_poll_interval_seconds: 3
+  session_ttl_seconds: 3600
+  rebac_allowed_peer_cidrs:
+    - "127.0.0.1/32"
+    - "::1/128"
+YAML
+```
+
+## DB, key, user
+
+```bash
+CONFIG=.quickstart/lore-auth.yaml
+
+lore-authctl --config "$CONFIG" init-db
+
+lore-authctl --config "$CONFIG" key generate --kid manual-1
+
+lore-authctl --config "$CONFIG" user add \
+  --email manual@example.com \
+  --name "Manual User"
+```
+
+This quickstart intentionally uses `user add` because it does not configure an IdP and later issues an authn token with `token mint-authn`.
+
+For IdP onboarding, use `user invite` instead.
+
+## Start bridge
+
+Start the bridge in another terminal.
+
+```bash
+source .quickstart/env
+
+lore-auth-server --config .quickstart/lore-auth.yaml
+```
+
+Check the HTTP side.
+
+```bash
+curl -f http://localhost:8080/healthz
+curl -f http://localhost:8080/.well-known/jwks.json
+```
+
+## authn token
+
+```bash
+lore-authctl --config "$CONFIG" token mint-authn \
+  manual@example.com \
+  --out .quickstart/authn.jwt
+```
+
+## loreserver config
+
+```bash
+cat > .quickstart/loreconfig/e2e.toml <<EOF
+[environment.endpoint]
+auth_url = "https://localhost:8081"
+
+[server.auth]
+jwt_issuer = "http://localhost:8080"
+jwt_audience = ["lore-service", "localhost"]
+
+[server.auth.jwk]
+endpoint = "http://localhost:8080/.well-known/jwks.json"
+
+[immutable_store.local]
+path = "$PWD/.quickstart/data"
+
+[mutable_store.local]
+path = "$PWD/.quickstart/data"
+EOF
+```
+
+Some `loreserver` distributions require a base config bundled with Lore.
+
+In that case, copy the bundled `default.toml` to `.quickstart/loreconfig/default.toml`.
+
+## Start loreserver
+
+Start `loreserver` in another terminal.
+
+```bash
+source .quickstart/env
+
+loreserver
+```
+
+## lore CLI
+
+Run the following in another terminal.
+
+```bash
+source .quickstart/env
+```
+
+Register the authn token.
+
+```bash
+lore auth login \
+  --token-type lore \
+  --token "$(cat .quickstart/authn.jwt)" \
+  --auth-url https://localhost:8081 \
+  lore://localhost:41337
+```
+
+Create a repository.
+
+```bash
+lore repository create lore://localhost:41337/manual-repo
+```
+
+Check that the repository was recorded by the bridge.
+
+```bash
+lore-authctl --config "$CONFIG" repo list
+```
+
+Add a grant.
+
+```bash
+lore-authctl --config "$CONFIG" grant add \
+  user:manual@example.com \
+  manual-repo \
+  writer
+```
+
+Check the ACL decision.
+
+```bash
+lore-authctl --config "$CONFIG" check \
+  manual@example.com \
+  manual-repo \
+  write
+```
+
+If the command prints `allow`, the grant is effective.
+
+Check clone.
+
+```bash
+lore clone lore://localhost:41337/manual-repo .quickstart/clone-manual-repo
+```
+
+## Failure Checks
+
+If `loreserver` cannot connect to the bridge, check `auth_url`, the gRPC TLS certificate, and `SSL_CERT_FILE`.
+
+If `lore repository create` fails with `"Failed to connect to rebac service"`, `loreserver` cannot establish a TLS connection to the bridge `RebacApi`.
+
+When using `mkcert`, especially check that `SSL_CERT_FILE` does not point to `.quickstart/grpc/tls.crt`.
+
+With `mkcert`, `.quickstart/grpc/tls.crt` is a leaf certificate, not the trust anchor.
+
+Set `SSL_CERT_FILE` to `$(mkcert -CAROOT)/rootCA.pem`.
+
+```bash
+openssl verify -CAfile "$SSL_CERT_FILE" .quickstart/grpc/tls.crt
+```
+
+If this check does not return `OK`, `loreserver` cannot verify the bridge gRPC TLS certificate.
+
+After fixing `SSL_CERT_FILE`, restart `loreserver`.
+
+If `lore auth login` succeeds but repository operations fail, authz token exchange may be failing.
+
+Check the bridge gRPC logs, `loreserver` logs, and the result of `lore-authctl check` in that order.
+
+If `PermissionDenied` is returned, check that the grant is attached to the repository name and that the user's email or ID resolves correctly.
+
+If JWT verification fails, check `jwt.issuer`, `jwt_issuer` in `loreserver`, `jwt.audience`, and `jwt_audience`.
+
+In these commands, do not mix `localhost` and `127.0.0.1`.

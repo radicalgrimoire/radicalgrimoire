@@ -1,0 +1,287 @@
+# Authctl
+
+[日本語](authctl.ja.md)
+
+`lore-authctl` is the administrative CLI for the bridge.
+
+It manages users, groups, repositories, grants, signing keys, and manually issued tokens.
+
+The examples below store the config path in a variable.
+
+```bash
+CONFIG=.quickstart/lore-auth.yaml
+```
+
+## init-db
+
+Create the SQLite database and apply migrations.
+
+```bash
+lore-authctl --config "$CONFIG" init-db
+```
+
+## key generate
+
+Create an RS256 signing key and register public JWK metadata in the DB.
+
+```bash
+lore-authctl --config "$CONFIG" key generate --kid manual-1
+```
+
+`--kid` must match `jwt.active_kid`.
+
+## key list
+
+```bash
+lore-authctl --config "$CONFIG" key list
+```
+
+## user invite
+
+Use `user invite` as the normal onboarding command for IdP login.
+
+It creates the bridge account and a pending invitation that reserves identity binding for verified email login in one operation.
+
+This flow assumes the provider uses `trust.email_binding: verified_email_invitation`.
+
+```bash
+PROVIDER_ID=company-sso
+
+lore-authctl --config "$CONFIG" user invite \
+  --idp "$PROVIDER_ID" \
+  --email alice@example.com \
+  --name "Alice Example"
+```
+
+This registration alone does not issue a token.
+
+When the user opens `/login` and the IdP returns a verified email that matches the invitation, that login becomes usable.
+
+`--idp` reads the provider instance from `identity_providers.providers` and fills the stored provider ID and issuer.
+
+When `identity_providers` is configured, `user invite` requires `--idp`.
+
+## user add
+
+`user add` is a low-level escape hatch.
+
+It creates only an active bridge principal.
+
+It does not create an external IdP binding, so the account cannot log in through an IdP as-is.
+
+Normally, use `user invite` for onboarding.
+
+Use `user add` for pre-provisioning or for deployments that use a subject strategy without email binding.
+
+```bash
+lore-authctl --config "$CONFIG" user add \
+  --email manual@example.com \
+  --name "Manual User"
+```
+
+## user list
+
+```bash
+lore-authctl --config "$CONFIG" user list
+```
+
+## user disable
+
+```bash
+lore-authctl --config "$CONFIG" user disable manual@example.com
+```
+
+Disabled users are rejected during token exchange.
+
+## user enable
+
+```bash
+lore-authctl --config "$CONFIG" user enable manual@example.com
+```
+
+Use `user enable` to restore a disabled user.
+
+## group add
+
+```bash
+lore-authctl --config "$CONFIG" group add artists \
+  --description "Artists with repository access"
+```
+
+Groups are grant subjects.
+
+## group list
+
+```bash
+lore-authctl --config "$CONFIG" group list
+```
+
+## group member add
+
+```bash
+lore-authctl --config "$CONFIG" group member add artists alice@example.com
+```
+
+The user argument accepts an email address or user ID.
+
+## group member remove
+
+```bash
+lore-authctl --config "$CONFIG" group member remove artists alice@example.com
+```
+
+## group nest add
+
+```bash
+lore-authctl --config "$CONFIG" group nest add all-creators artists
+```
+
+`group nest` creates group-in-group membership.
+
+Users in the member group inherit grants assigned to the parent group transitively.
+
+Cycles and self-membership are rejected.
+
+## group nest remove
+
+```bash
+lore-authctl --config "$CONFIG" group nest remove all-creators artists
+```
+
+## group network-cidr
+
+Setting a CIDR on a group restricts completion of CLI login for users in that group to matching source IP addresses.
+
+Users with no applicable group CIDRs remain unrestricted. CIDRs from all applicable groups are ORed, including CIDRs inherited through parent groups.
+
+```bash
+lore-authctl --config "$CONFIG" group network-cidr add company-a-network 203.0.113.0/24
+lore-authctl --config "$CONFIG" group network-cidr add company-b-network 198.51.100.0/24
+
+lore-authctl --config "$CONFIG" group network-cidr list company-a-network
+
+lore-authctl --config "$CONFIG" group network-cidr remove company-a-network 203.0.113.0/24
+```
+
+CIDRs are stored in normalized form; for example, `203.0.113.9/24` is stored as `203.0.113.0/24`.
+
+The restriction applies only while completing login. It does not re-evaluate the source IP for repository operations performed with an issued token.
+
+Behind a reverse proxy, the gRPC proxy must set `x-lore-client-ip` to `$remote_addr` so the bridge can safely obtain the client IP.
+
+## repo add
+
+Repositories are normally registered through ReBAC `CreateResource` calls from `loreserver`.
+
+Use the following command for manual registration.
+
+```bash
+lore-authctl --config "$CONFIG" repo add \
+  manual-repo \
+  --remote lore://localhost:41337/manual-repo \
+  --lore-repository-id 11111111111111111111111111111111
+```
+
+The JWT `resources[].resource_id` value is `urc-{lore_repository_id}`.
+
+It is not the repository name.
+
+## repo list
+
+```bash
+lore-authctl --config "$CONFIG" repo list
+```
+
+## grant add
+
+```bash
+lore-authctl --config "$CONFIG" grant add \
+  user:manual@example.com \
+  manual-repo \
+  writer
+```
+
+Subjects use the form `user:<email-or-id>` or `group:<name>`.
+
+This documentation uses `writer` for repository operations.
+
+It does not cover using `reader` as a read-only role.
+
+## grant list
+
+```bash
+lore-authctl --config "$CONFIG" grant list
+
+lore-authctl --config "$CONFIG" grant list manual-repo
+```
+
+## grant remove
+
+```bash
+lore-authctl --config "$CONFIG" grant remove \
+  user:manual@example.com \
+  manual-repo \
+  writer
+```
+
+## check
+
+Check the bridge-side authorization backend decision.
+
+```bash
+lore-authctl --config "$CONFIG" check \
+  manual@example.com \
+  manual-repo \
+  write
+```
+
+The command returns `allow` when access is permitted.
+
+## token mint-authn
+
+When IdP login is not used, manually issue an authn token.
+
+```bash
+lore-authctl --config "$CONFIG" token mint-authn \
+  manual@example.com \
+  --out .quickstart/authn.jwt
+```
+
+When `--out` is specified, the token is written to a file with mode `0600`, and no token or login command is printed.
+
+Without `--out`, the token is printed to stdout.
+
+If `--print-login-command` is also set, the `lore auth login` command containing the token is printed to stderr.
+
+That output can remain in terminal logs, so do not use it in shared terminals or CI logs.
+
+Pass the issued token to `lore auth login --token-type lore`.
+
+Use `--ttl 3600s`, `--ttl 15m`, or `--ttl 1h` to override the default authn token TTL.
+
+```bash
+lore auth login \
+  --token-type lore \
+  --token "$(cat .quickstart/authn.jwt)" \
+  --auth-url https://localhost:8081 \
+  lore://localhost:41337
+```
+
+## token mint
+
+Manually issue a repository-scoped authz token.
+
+During normal repository operations, the Lore CLI obtains authz tokens by calling `ExchangeUserTokenForMultiresourceToken`.
+
+```bash
+lore-authctl --config "$CONFIG" token mint \
+  manual@example.com \
+  manual-repo \
+  --role writer
+```
+
+Without `--out`, `token mint` prints the token to stdout.
+
+It prints a login command only when `--print-login-command` is set.
+
+For browser-issued repository tokens from `/tokens` and `/tokens/mint`, see [Operations](operations.md#web-token-page).
