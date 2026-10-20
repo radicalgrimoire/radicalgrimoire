@@ -1,16 +1,16 @@
-# Admin Web UI
+# 管理 Web UI
 
-[日本語](admin-ui.ja.md)
+[English](admin-ui.md)
 
-The admin Web UI is served by the same HTTP process as login, JWKS, device flow, and health checks.
+管理 Web UI は、login、JWKS、device flow、health check と同じ HTTP process で提供されます。
 
-It is mounted under `/admin` only when `admin.admin_emails` contains at least one address.
+`admin.admin_emails` に 1 件以上の address がある場合だけ、`/admin` に mount されます。
 
-If `admin.admin_emails` is omitted or empty, `/admin` is not mounted and returns 404.
+`admin.admin_emails` を省略した場合、または空の場合、`/admin` は mount されず 404 を返します。
 
-## Enable The UI
+## UI の有効化
 
-Add the admin section to `lore-auth.yaml`.
+`lore-auth.yaml` に admin section を追加します。
 
 ```yaml
 admin:
@@ -18,21 +18,23 @@ admin:
     - "admin@example.com"
 ```
 
-The listed addresses are normalized before comparison.
+列挙した address は正規化してから比較されます。
 
-An operator signs in through the configured OIDC login flow first, then opens `/admin`.
+operator は、先に設定済みの OIDC login flow で sign in し、その後 `/admin` を開きます。
 
-Unauthenticated and non-admin requests to `/admin` return 404 so that the deployment does not reveal whether the admin UI is enabled.
+未認証 request と非 admin request は 404 を返します。
 
-## Network Controls
+これにより、admin UI が有効かどうかを外部 probe に見せません。
 
-`/admin` shares the public HTTP listener.
+## ネットワーク制限
 
-In production, put the bridge behind a reverse proxy such as NGINX or Caddy and restrict `/admin` at that edge.
+`/admin` は公開 HTTP listener と同居します。
 
-Use CDN or WAF controls such as Cloudflare when the deployment needs source restrictions or stronger rate limiting at the public boundary.
+本番では、bridge を NGINX や Caddy などの reverse proxy の背後に置き、edge 側で `/admin` を制限してください。
 
-The bridge also supports a second layer of peer filtering.
+公開境界で送信元制限や強い rate limit が必要な場合は、Cloudflare などの CDN または WAF も使います。
+
+bridge は第二層の peer filter も持ちます。
 
 ```yaml
 security:
@@ -40,41 +42,41 @@ security:
     - "127.0.0.1/32"
 ```
 
-This check uses the TCP peer address seen directly by the bridge.
+この判定は、bridge が直接見る TCP peer address を使います。
 
-Behind a reverse proxy, allow the proxy address and enforce the public admin allowlist at the proxy.
+reverse proxy の背後では、proxy の address を許可し、公開側の admin allowlist は proxy で強制してください。
 
-The bridge does not trust `X-Forwarded-For` for this check.
+この判定では `X-Forwarded-For` を信頼しません。
 
-In a minimal deployment without a reverse proxy, the only admin protections are OIDC login, `admin.admin_emails`, and the optional `security.admin_allowed_peer_cidrs` setting.
+reverse proxy なしの最小構成では、admin の防御は OIDC login、`admin.admin_emails`、任意の `security.admin_allowed_peer_cidrs` だけです。
 
-## Features
+## 機能
 
-The UI can browse and search repositories, users, groups, grants, and user access.
+UI では repository、user、group、grant、user access を閲覧および検索できます。
 
-It can add and disable users, create invitations, add and disable manual repositories, manage grants, and manage groups.
+user の追加と無効化、invitation 作成、manual repository の追加と無効化、grant 管理、group 管理ができます。
 
-On the Users page, invitation is the primary onboarding action.
+Users 画面では、招待がオンボーディングの主動線です。
 
-Adding a user directly is an advanced operation that creates an account without login binding.
+user の直接追加は、ログイン binding を持たない account を作る advanced 操作です。
 
-Nested group operations are always available.
+nested group 操作は常に使えます。
 
-The check simulator at `/admin/simulator` runs the configured authorization policy for a user, repository, and action.
+`/admin/simulator` の check simulator は、user、repository、action を入力して、設定済み authorization policy を実行します。
 
-The simulator also shows grant evidence, including nested group paths, as helper information.
+simulator は nested group path を含む grant 根拠も補助情報として表示します。
 
-The policy result is authoritative.
+policy の結果が正です。
 
-Admin mutations are recorded in `admin_audit`.
+admin mutation は `admin_audit` に記録されます。
 
-For direct SQLite inspection:
+SQLite を直接確認する例です。
 
 ```bash
 sqlite3 /var/lib/lore-auth/auth.sqlite3 \
   "SELECT created_at, actor, action, object_type, object_id, detail FROM admin_audit ORDER BY created_at DESC LIMIT 20;"
 ```
 
-## Recovery
+## 復旧
 
-For admin re-enable and IdP-outage procedures, see [Operations](operations.md#recovery).
+admin の再有効化と IdP 障害時の手順は [Operations](operations.md#recovery) を参照してください。

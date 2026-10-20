@@ -1,6 +1,6 @@
 # LORE Server の更新
 
-[LORE Server の構築・運用](./lore-server.md) で永続 store、certificate、systemd unit が
+[LORE Server の構築・運用](./server-215.md) で永続 store、certificate、systemd unit が
 設定済みであることを前提に、`172.20.12.193` の Lore Server を公開 release へ更新する。
 
 ## Lore 0.10.1 の配置

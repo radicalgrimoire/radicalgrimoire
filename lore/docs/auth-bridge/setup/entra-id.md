@@ -1,73 +1,75 @@
 # Microsoft Entra ID
 
-[日本語](entra-id.ja.md)
+[English](entra-id.md)
 
-To use Microsoft Entra ID for login, register a web application in the tenant and configure its Application client ID, client secret, and redirect URL in the bridge.
+Microsoft Entra ID を login に使う場合は、tenant に Web application を登録し、その Application client ID、client secret、redirect URL を bridge に設定します。
 
-The bridge matches the identity obtained from Entra ID login against users registered in the bridge DB.
+bridge は Entra ID login で得た identity を、bridge DB に登録されたユーザーと照合します。
 
-A successful Entra ID login alone does not make the user a Lore user.
+Entra ID login に成功しただけでは、Lore の利用者にはなりません。
 
-This page is based on common Microsoft Entra ID app-registration steps; this project has not been exercised with Entra ID as extensively as Google OIDC.
+このページは Microsoft Entra ID の一般的な app registration 手順に基づきます。Google OIDC ほど実環境で検証されているわけではありません。
 
-## Required Values
+## 必要なもの
 
-Prepare the following values to enable Microsoft Entra ID:
+Microsoft Entra ID を有効にするには、次の値を用意します。
 
-- **Tenant ID**: Directory tenant ID accepted by the bridge.
-- **Application client ID**: application ID from the Entra app registration.
-- **Client secret**: secret value created for the app registration.
-- **Redirect URL**: bridge callback URL to which Entra ID returns after login.
-- **User email**: email address to register in the bridge when using verified-email invitations.
+- **Tenant ID**：bridge が受け入れる Directory tenant ID。
+- **Application client ID**：Entra app registration の application ID。
+- **Client secret**：app registration で作成した secret value。
+- **Redirect URL**：Entra ID login 後に Entra ID が戻す bridge の callback URL。
+- **User email**：verified-email invitation を使う場合に bridge へ登録する email。
 
-`client_secret_file` must contain the path to a file that stores the secret, not the secret value itself.
+`client_secret_file` には secret の値ではなく、secret を保存したファイルパスを書きます。
 
-Use a tenant-specific issuer in the form `https://login.microsoftonline.com/{tenant}/v2.0`.
+issuer には `https://login.microsoftonline.com/{tenant}/v2.0` 形式の tenant 固定 URL を使います。
 
-Use the Directory tenant ID as `subject.required_tid`.
+`subject.required_tid` には Directory tenant ID を設定します。
 
-The bridge subject for Entra ID is built from the ID token `tid` and `oid` claims, not from email, UPN, or `preferred_username`.
+Entra ID の bridge subject は、ID token の `tid` claim と `oid` claim から作ります。
 
-## Values From Microsoft Entra
+email、UPN、`preferred_username` は使いません。
 
-Create or choose an app registration in Microsoft Entra ID.
+## Microsoft Entra で取得する値
 
-Microsoft Entra admin center screen names can change, so treat the steps below as conceptual.
+Microsoft Entra ID で app registration を作成するか、既存のものを選びます。
+
+Microsoft Entra admin center の画面名や導線は変わることがあるため、以下は概念手順として扱ってください。
 
 - Register an application in Microsoft Entra ID: https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app
 - Microsoft identity platform OpenID Connect: https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc
 
-## App Registration
+## App registration
 
-Create an app registration for the bridge.
+bridge 用の app registration を作成します。
 
-For most bridge deployments, use a single-tenant app registration for the tenant that owns the Lore users.
+多くの bridge deployment では、Lore user を持つ tenant に対する single-tenant app registration を使います。
 
-Record the Application client ID and Directory tenant ID.
+Application client ID と Directory tenant ID を控えます。
 
-Configure the application as a web application and register the exact bridge callback URL.
+application を Web application として設定し、bridge の callback URL を完全一致で登録します。
 
-For local use, register:
+ローカルでは次の URI を登録します。
 
 ```text
 http://localhost:8080/auth/entra/callback
 ```
 
-For production, use the public URL.
+本番では公開 URL に合わせます。
 
 ```text
 https://auth.example.com/auth/entra/callback
 ```
 
-Create a client secret for the app registration and record the secret value before leaving the page where it is shown.
+app registration の client secret を作成し、表示されている間に secret value を控えます。
 
-The redirect URI in Entra ID and `identity_providers.providers.entra.redirect_url` in the bridge config must be the same string.
+Entra ID 側の redirect URI と、bridge config の `identity_providers.providers.entra.redirect_url` は同じ文字列にします。
 
-Callback handling fails if the scheme, host, port, path, or trailing slash differs.
+scheme、host、port、path、末尾の slash が違うと callback は失敗します。
 
-## Bridge Settings
+## bridge 設定
 
-For local Entra ID verification, use settings like these:
+ローカルで Entra ID を試す場合は次のように設定します。
 
 ```yaml
 server:
@@ -95,22 +97,19 @@ identity_providers:
           - "example.com"
 ```
 
-Do not write the Client secret directly into YAML.
-
-Store it in a file.
+Client secret は YAML に直接書かず、ファイルに保存します。
 
 ```bash
 printf '%s' '<Entra client secret>' > .quickstart/entra_client_secret
 chmod 600 .quickstart/entra_client_secret
 ```
 
-## Verifying the Client Secret
+## Client secret の検証
 
-When callback handling displays `identity provider login failed`, verify that
-the Entra token endpoint accepts the bridge Application client ID and client
-secret.
+callback 後に `identity provider login failed` が出る場合、Entra token endpoint が
+bridge の Application client ID と client secret を受理するか確認します。
 
-The following script does not print the secret or an access token.
+次の script は secret と access token を表示しません。
 
 ```bash
 bash scripts/verify-entra-client-secret.sh \
@@ -119,11 +118,11 @@ bash scripts/verify-entra-client-secret.sh \
   --secret-file "/etc/lore-auth/entra_client_secret"
 ```
 
-An `OK` result means Entra accepted the client ID and client secret. An
-`invalid_client` result means the secret value (not the Secret ID) is wrong,
-expired, or belongs to another app registration.
+`OK` の場合、client ID と client secret は Entra に受理されています。
+`invalid_client` の場合は、secret の値（Secret ID ではない）が誤っている、期限切れ、
+または別の app registration 用です。
 
-In production, use an HTTPS public URL.
+本番では HTTPS の公開 URL を使います。
 
 ```yaml
 server:
@@ -151,21 +150,21 @@ identity_providers:
           - "example.com"
 ```
 
-`subject.strategy: entra_oid_tid` requires `subject.required_tid`.
+`subject.strategy: entra_oid_tid` では `subject.required_tid` が必須です。
 
-The tenant pin prevents subject collisions when an Entra setup can involve more than one tenant.
+tenant を固定することで、複数 tenant が関係する Entra setup での subject 衝突を防ぎます。
 
-The OIDC adapter reads the ID token `tid` and `oid` claims and stores the bridge subject as `tid:oid`.
+OIDC adapter は ID token の `tid` claim と `oid` claim を読み、bridge subject を `tid:oid` として保存します。
 
-`trust.email_binding: verified_email_invitation` needs the ID token to contain a verified email matching a pending invitation.
+`trust.email_binding: verified_email_invitation` では、ID token に pending invitation と一致する verified email が含まれる必要があります。
 
-See [Configuration](configuration.md#identity_providers) for the exact binding and `trust.allowed_email_domains` rules.
+正確な binding と `trust.allowed_email_domains` の規則は [Configuration](configuration.md#identity_providers) を参照してください。
 
-## User Registration
+## ユーザー登録
 
-Even after Entra ID login succeeds, the bridge does not issue a token unless the corresponding user is registered in the bridge DB.
+Entra ID login が成功しても、対応するユーザーが bridge DB に登録されていなければ token は発行されません。
 
-Usually, an administrator registers the target user's email.
+通常は、管理者が対象ユーザーの email を登録します。
 
 ```bash
 lore-authctl --config .quickstart/lore-auth.yaml user invite \
@@ -174,40 +173,40 @@ lore-authctl --config .quickstart/lore-auth.yaml user invite \
   --name '<display name>'
 ```
 
-At this point, linkage with the Entra account is not complete, so no token is issued.
+この時点では Entra account との連携がまだ完了していないため、token は発行されません。
 
-If the user is not invited, no token is issued.
+招待されていない場合、token は発行されません。
 
-After the invitation is created, open `/login` again to create the bridge browser session.
+招待を作成してから、もう一度 `/login` を開くと bridge のブラウザセッションが作成されます。
 
 ```text
 http://localhost:8080/login
 ```
 
-## Behavior
+## 動作
 
-The bridge verifies the Entra ID token in the callback.
+bridge は callback で Entra ID token を検証します。
 
-After verification, it checks the token tenant ID against `subject.required_tid`.
+検証後、token の tenant ID を `subject.required_tid` と照合します。
 
-It then resolves the provider ID, issuer, and `tid:oid` subject against `external_identities`.
+次に provider ID、issuer、`tid:oid` subject を `external_identities` と照合します。
 
-If an active binding exists, the browser session or CLI auth session completes.
+active な binding があれば、ブラウザセッションまたは CLI auth session が完了します。
 
-If no active binding exists, the generic invitation-binding policy from [Configuration](configuration.md#identity_providers) applies.
+active な binding がない場合は、[Configuration](configuration.md#identity_providers) の generic invitation-binding policy が適用されます。
 
-If no binding or invitation matches, the bridge does not issue a token and displays the whoami page.
+binding または invitation と照合できない場合は token を発行せず、whoami 画面を表示します。
 
-## Common Failures
+## よくある失敗
 
-If callback handling fails, check that the redirect URI registered in Entra ID exactly matches `identity_providers.providers.entra.redirect_url`.
+callback handling が失敗する場合は、Entra ID に登録した redirect URI と `identity_providers.providers.entra.redirect_url` が完全一致しているか確認します。
 
-If login succeeds at Entra ID but no Lore token is issued, invite the verified email with `lore-authctl --config <cfg> user invite --idp entra`, then retry login.
+Entra ID login は成功しているのに Lore token が発行されない場合は、`lore-authctl --config <cfg> user invite --idp entra` で verified email を招待してから login をやり直します。
 
-If login is rejected after callback, check that the ID token `tid` claim matches `subject.required_tid`.
+callback 後に login が拒否される場合は、ID token の `tid` claim が `subject.required_tid` と一致しているか確認します。
 
-If the bridge reports that `entra_oid_tid` requires `tid` and `oid` claims, confirm that the app registration and issuer are returning Entra ID tokens for the expected tenant.
+bridge が `entra_oid_tid` には `tid` と `oid` claim が必要だと報告する場合は、app registration と issuer が想定 tenant の Entra ID token を返しているか確認します。
 
-If the invitation is not consumed, confirm that the ID token contains the expected email and that the email is treated as verified by the provider claims.
+invitation が消費されない場合は、ID token に想定 email が含まれ、その email が provider claim 上で verified として扱われているか確認します。
 
-If any of `identity_providers.providers.entra.client_id`, `identity_providers.providers.entra.client_secret_file`, or `identity_providers.providers.entra.redirect_url` is empty, Entra ID login is not enabled.
+`identity_providers.providers.entra.client_id`、`identity_providers.providers.entra.client_secret_file`、`identity_providers.providers.entra.redirect_url` のどれかが空の場合、Entra ID login は有効になりません。

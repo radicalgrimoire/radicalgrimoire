@@ -129,7 +129,7 @@ lore clone lore://172.20.12.193:41337/gamestudio/UnrealEngine .\UnrealEngine
 
 ## 関連資料
 
-- [172.20.12.193: Lore と lore-auth-bridge の構築記録](../setup/on-prem-entra-lore-server.ja.md)
-- [Microsoft Entra ID](../setup/entra-id.ja.md)
-- [Authctl](../setup/authctl.ja.md)
-- [Entra ID 連携の変更根拠と検証記録](../setup/entra-id-integration-evidence.ja.md)
+- [Lore Server 導入記録](./server-215.md)
+- [Microsoft Entra ID](../docs/auth-bridge/setup/entra-id.md)
+- [Authctl](../docs/auth-bridge/setup/authctl.md)
+- [Entra ID 連携の変更根拠と検証記録](../docs/auth-bridge/setup/entra-id-integration-evidence.md)

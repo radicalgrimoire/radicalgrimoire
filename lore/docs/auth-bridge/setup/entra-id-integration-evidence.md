@@ -2,7 +2,7 @@
 
 この文書は、`lore-auth-bridge` を Microsoft Entra ID と連携させるために追加・修正した内容と、その必要性および検証結果を記録するものです。
 
-構築手順は [172.20.12.193: Lore と lore-auth-bridge の構築記録](on-prem-entra-lore-server.ja.md) を参照してください。
+構築手順は [Lore Server 導入記録](../../../work/server-215.md) を参照してください。
 
 ## 対象 commit
 
@@ -19,7 +19,7 @@ crates/lore-auth-adapters/src/sqlite/accounts.rs
 crates/lore-auth-adapters/src/sqlite/audited.rs
 crates/lore-authctl/src/commands/user.rs
 crates/lore-authctl/src/main.rs
-doc/setup/authctl.ja.md
+doc/setup/authctl.md
 scripts/onboard-entra-user.sh
 ```
 

@@ -106,7 +106,7 @@ Lore Server の状態を代替してはならない。
 
 ## 関連資料
 
-- [管理 Web UI](../setup/admin-ui.ja.md)
-- [Authctl](../setup/authctl.ja.md)
-- [Microsoft Entra ID](../setup/entra-id.ja.md)
-- [172.20.12.193: Lore と lore-auth-bridge の構築記録](../setup/on-prem-entra-lore-server.ja.md)
+- [管理 Web UI](../setup/admin-ui.md)
+- [Authctl](../setup/authctl.md)
+- [Microsoft Entra ID](../setup/entra-id.md)
+- [Lore Server 導入記録](../../../work/server-215.md)

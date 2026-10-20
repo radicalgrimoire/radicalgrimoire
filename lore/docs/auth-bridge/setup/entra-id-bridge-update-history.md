@@ -2,7 +2,7 @@
 
 この文書は、Git history と `origin/main..main` の差分を基に、今回の fork で `lore-auth-bridge` をなぜ更新したかを説明するものです。
 
-構築 command は [172.20.12.193: Lore と lore-auth-bridge の構築記録](on-prem-entra-lore-server.ja.md)、実機検証の詳細は [Entra ID 連携の変更根拠と検証記録](entra-id-integration-evidence.ja.md) に分けています。
+構築 command は [Lore Server 導入記録](../../../work/server-215.md)、実機検証の詳細は [Entra ID 連携の変更根拠と検証記録](entra-id-integration-evidence.md) に分けています。
 
 ## 差分の範囲
 
@@ -19,7 +19,7 @@ M crates/lore-auth-adapters/src/sqlite/accounts.rs
 M crates/lore-auth-adapters/src/sqlite/audited.rs
 M crates/lore-authctl/src/commands/user.rs
 M crates/lore-authctl/src/main.rs
-M doc/setup/authctl.ja.md
+M doc/setup/authctl.md
 A scripts/onboard-entra-user.sh
 ```
 

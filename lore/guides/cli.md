@@ -6,8 +6,10 @@ Lore CLI の公式ドキュメント:
 - https://github.com/EpicGames/lore
 
 Lore Server の構築、永続 store、systemd 設定は
-[LORE Server の構築・運用](./lore-server.md) を参照する。server binary の release 更新は
-[LORE Server の更新](./lore-server-update.md) を参照する。
+[LORE Server の構築・運用](../work/server-215.md) を参照する。server binary の release 更新は
+[LORE Server の更新](../work/server-193-update.md) を参照する。
+
+初めて試す場合は、[LORE 試用ガイド](./trial.md) を参照する。
 
 ## インストール
 

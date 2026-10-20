@@ -1,140 +1,142 @@
 # Keycloak
 
-[日本語](keycloak.ja.md)
+[English](keycloak.md)
 
-To use Keycloak for login, create or choose a realm, create an OpenID Connect client for the bridge, and configure its Client ID, Client secret, issuer, and redirect URL in the bridge.
+Keycloak を login に使う場合は、realm を作成または選択し、bridge 用の OpenID Connect client を作成して、その Client ID、Client secret、issuer、redirect URL を bridge に設定します。
 
-The bridge matches the identity obtained from Keycloak login against users registered in the bridge DB.
+bridge は Keycloak login で得た identity を、bridge DB に登録されたユーザーと照合します。
 
-A successful Keycloak login alone does not make the user a Lore user.
+Keycloak login に成功しただけでは、Lore の利用者にはなりません。
 
-This page is based on common Keycloak realm and client setup steps; this project has not been exercised with Keycloak as extensively as Google OIDC.
+このページは Keycloak の一般的な realm と client の設定手順に基づきます。Google OIDC ほど実環境で検証されているわけではありません。
 
-## Required Values
+## 必要なもの
 
-Prepare the following values to enable Keycloak:
+Keycloak を有効にするには、次の値を用意します。
 
-- **Realm URL**: base issuer URL for the Keycloak realm.
-- **Client ID**: OIDC client ID created for the bridge.
-- **Client secret**: secret value for a confidential client.
-- **Redirect URL**: bridge callback URL to which Keycloak returns after login.
-- **User email**: email address to register in the bridge when using verified-email invitations.
+- **Realm URL**：Keycloak realm の issuer URL。
+- **Client ID**：bridge 用に作成した OIDC client ID。
+- **Client secret**：confidential client の secret value。
+- **Redirect URL**：Keycloak login 後に Keycloak が戻す bridge の callback URL。
+- **User email**：verified-email invitation を使う場合に bridge へ登録する email。
 
-`client_secret_file` must contain the path to a file that stores the secret, not the secret value itself.
+`client_secret_file` には secret の値ではなく、secret を保存したファイルパスを書きます。
 
-The Keycloak issuer normally has the form `https://{host}/realms/{realm}`.
+Keycloak の issuer は通常 `https://{host}/realms/{realm}` 形式です。
 
-The bridge uses `subject.strategy: oidc_sub` for Keycloak.
+Keycloak では `subject.strategy: oidc_sub` を使います。
 
-The persistent identity key is the Keycloak OIDC `sub` claim, not email, username, or UPN.
+永続 identity key は Keycloak OIDC の `sub` claim です。
 
-## Values From Keycloak
+email、username、UPN は使いません。
 
-Create or choose the Keycloak realm that owns the users.
+## Keycloak で取得する値
 
-Keycloak admin console labels can change, so treat the steps below as conceptual.
+ユーザーを持つ Keycloak realm を作成するか、既存 realm を選びます。
+
+Keycloak admin console の画面名や導線は変わることがあるため、以下は概念手順として扱ってください。
 
 - Keycloak Server Administration Guide, client management: https://www.keycloak.org/docs/latest/server_admin/#assembly-managing-clients_server_administration_guide
 - Keycloak OpenID Connect endpoints: https://www.keycloak.org/securing-apps/oidc-layers
 
 ## Realm
 
-Use one realm for the users that should log in to the bridge.
+bridge に login するユーザーを含む realm を 1 つ使います。
 
-Reuse a realm your organization already runs, or create a dedicated one (for example `prod`).
+組織で既に利用中の realm があればそれを使い、なければ専用 realm(例 `prod`)を新規作成します。
 
-Do not use the `master` realm for application logins; it administers Keycloak itself.
+`master` realm は Keycloak 自身の管理用なので、アプリのログインには使いません。
 
-The realm, the client, and the bridge configuration map to each other like this:
+realm、client、bridge 設定は次のように対応します。
 
-| Keycloak side | Bridge config side | Relationship |
+| Keycloak 側 | bridge config 側 | 関係 |
 | --- | --- | --- |
-| realm name | `issuer` | The realm name is part of the issuer URL (`https://{host}/realms/{realm}`). The bridge fetches OIDC discovery at startup and verifies the issuer matches. |
-| client inside the realm | `client_id` / `client_secret_file` | Clients belong to a realm, so the issuer and the client id must come from the same realm. |
-| client's valid redirect URIs | provider key (the name under `providers:`) | The bridge callback path `/auth/{provider key}/callback` must be registered on the client. |
+| realm 名 | `issuer` | realm 名が issuer URL の一部になります(`https://{host}/realms/{realm}`)。bridge は起動時に OIDC discovery を取得し、issuer の一致を検証します。 |
+| realm 内の client | `client_id` / `client_secret_file` | client は realm に属します。issuer と client_id は同じ realm の組み合わせである必要があります。 |
+| client の Valid redirect URIs | provider キー(`providers:` 直下の名前) | bridge の callback パス `/auth/{provider キー}/callback` を client 側に登録します。 |
 
-Record the realm issuer URL.
+realm issuer URL を控えます。
 
-For a realm named `prod` on `sso.example.com`, the issuer is:
+`sso.example.com` 上の `prod` realm なら issuer は次の値です。
 
 ```text
 https://sso.example.com/realms/prod
 ```
 
-The issuer configured in the bridge must match the issuer advertised by Keycloak OIDC discovery.
+bridge に設定する issuer は、Keycloak OIDC discovery が返す issuer と一致させます。
 
 ## Client
 
-Create an OpenID Connect client for the bridge.
+bridge 用の OpenID Connect client を作成します。
 
-Use the authorization code flow with a confidential client or equivalent client authentication setting that provides a client secret.
+authorization code flow と、client secret を発行する confidential client または同等の client authentication 設定を使います。
 
-### Create Client Wizard Settings
+### Create Client ウィザードの設定
 
-The create-client wizard shows many options; the bridge only needs a few of them.
+create client ウィザードには多くの項目が並びますが、bridge に必要なのは一部だけです。
 
-**General settings** page:
+**General settings** ページ:
 
-| Setting | Value for the bridge | Why |
+| 項目 | bridge 向けの値 | 理由 |
 | --- | --- | --- |
-| Client type | `OpenID Connect` | The bridge only speaks OIDC. |
-| Client ID | your choice, e.g. `lore-auth-bridge` | Must match `client_id` in the bridge config. |
-| Name / Description / Always display in UI | anything | Display-only, no effect on the bridge. |
+| Client type | `OpenID Connect` | bridge は OIDC のみ対応します。 |
+| Client ID | 任意(例 `lore-auth-bridge`) | bridge config の `client_id` と一致させます。 |
+| Name / Description / Always display in UI | 任意 | 表示用の項目で、bridge の動作には影響しません。 |
 
-**Capability config** page:
+**Capability config** ページ:
 
-| Setting | Value for the bridge | Why |
+| 項目 | bridge 向けの値 | 理由 |
 | --- | --- | --- |
-| Client authentication | **On** | On makes this a confidential client and issues a client secret. The bridge requires a secret (`client_secret_file`), so leaving the default Off breaks the token exchange. |
-| Authorization | Off | This is Keycloak's own fine-grained authorization service. Repository permissions live in the bridge's ReBAC model instead. |
-| Standard flow | **On** | The authorization code flow. This is the only flow the bridge uses for browser login. |
-| Implicit flow | Off | Legacy browser flow, not used. |
-| Direct access grants | Off | Password-grant (ROPC), not used. |
-| Service account roles | Off | Client-credentials machine login, not used. |
-| Standard Token Exchange / JWT Authorization Grant / OIDC CIBA Grant | Off | Not used by the bridge. |
-| OAuth 2.0 Device Authorization Grant | Off | Easy to confuse: the lore CLI's device flow runs between the CLI and the bridge. The bridge always talks to Keycloak with the standard flow, so Keycloak's device grant stays off. |
-| Require PKCE | optional | If you set `pkce: required` in the bridge provider config, the bridge sends an S256 code challenge and you can turn this on to enforce it server-side. |
-| Require DPoP bound tokens | Off | The bridge does not support DPoP. |
+| Client authentication | **On** | On にすると confidential client になり client secret が発行されます。bridge は secret 必須(`client_secret_file`)のため、デフォルトの Off のままだと token 交換が失敗します。 |
+| Authorization | Off | Keycloak 自身の fine-grained authorization サービスです。repository 権限は bridge 側の ReBAC で管理するため不要です。 |
+| Standard flow | **On** | authorization code flow です。bridge のブラウザログインが使う唯一のフローです。 |
+| Implicit flow | Off | レガシーなブラウザフローで、使いません。 |
+| Direct access grants | Off | パスワード直接渡し(ROPC)で、使いません。 |
+| Service account roles | Off | client credentials によるマシンログインで、使いません。 |
+| Standard Token Exchange / JWT Authorization Grant / OIDC CIBA Grant | Off | bridge では使いません。 |
+| OAuth 2.0 Device Authorization Grant | Off | 紛らわしい項目です。lore CLI の device flow は「CLI と bridge の間」の仕組みで、bridge と Keycloak の間は常に standard flow です。Keycloak 側の device grant は不要です。 |
+| Require PKCE | 任意 | bridge の provider 設定で `pkce: required` にすると bridge は S256 の code challenge を送ります。合わせて On にするとサーバ側でも強制できます。 |
+| Require DPoP bound tokens | Off | bridge は DPoP に対応していません。 |
 
-**Login settings** page:
+**Login settings** ページ:
 
-| Setting | Value for the bridge | Why |
+| 項目 | bridge 向けの値 | 理由 |
 | --- | --- | --- |
-| Root URL | empty | Only a base for resolving relative URLs. Not needed when the redirect URI is entered as an absolute URL. |
-| Home URL | empty | Where Keycloak's own UI links to the app. Display-only. |
-| Valid redirect URIs | **the bridge callback URL** | The only required field on this page. Enter it exactly, without wildcards; the format is described below. |
-| Valid post logout redirect URIs | empty | Only used for Keycloak-initiated logout redirects. The bridge does not use the IdP logout flow. |
-| Web origins | empty | CORS allowlist for browser-side JavaScript. The bridge exchanges the code server-side, so no origin is needed. |
+| Root URL | 空 | 相対 URL 解決の基点にすぎません。redirect URI を絶対 URL で入力するなら不要です。 |
+| Home URL | 空 | Keycloak 自身の UI からアプリへ張るリンク先で、表示用です。 |
+| Valid redirect URIs | **bridge の callback URL** | このページで唯一の必須項目です。ワイルドカードを使わず完全一致で入力します。形式は後述します。 |
+| Valid post logout redirect URIs | 空 | Keycloak 起点の logout リダイレクト用です。bridge は IdP の logout フローを使いません。 |
+| Web origins | 空 | ブラウザ側 JavaScript の CORS 許可リストです。bridge はサーバ側で code を交換するため不要です。 |
 
-After creation, open the **Credentials** tab and copy the client secret into the file referenced by `client_secret_file`.
+作成後、**Credentials** タブで client secret を取得し、`client_secret_file` が指すファイルに保存します。
 
-Register the exact bridge callback URL as a valid redirect URI.
+bridge の callback URL を valid redirect URI として完全一致で登録します。
 
-For local use, register:
+ローカルでは次の URI を登録します。
 
 ```text
 http://localhost:8080/auth/keycloak-prod/callback
 ```
 
-For production, use the public URL.
+本番では公開 URL に合わせます。
 
 ```text
 https://auth.example.com/auth/keycloak-prod/callback
 ```
 
-Save the Client ID and Client secret.
+Client ID と Client secret を保存します。
 
-The provider key in the bridge config is part of the callback path.
+bridge config の provider key は callback path の一部です。
 
-If the provider key is `keycloak-prod`, the redirect path must be `/auth/keycloak-prod/callback`.
+provider key が `keycloak-prod` なら redirect path は `/auth/keycloak-prod/callback` です。
 
-Callback handling fails if the scheme, host, port, path, or trailing slash differs.
+scheme、host、port、path、末尾の slash が違うと callback は失敗します。
 
-If you plan to use verified-email invitations, make sure Keycloak sends `email` and `email_verified` in the ID token for users who should bind on first login.
+verified-email invitation を使う場合は、初回 login で bind するユーザーの ID token に `email` と `email_verified` が含まれるように Keycloak を設定します。
 
-## Bridge Settings
+## bridge 設定
 
-For local Keycloak verification, use settings like these:
+ローカルで Keycloak を試す場合は次のように設定します。
 
 ```yaml
 server:
@@ -161,16 +163,14 @@ identity_providers:
           - "example.com"
 ```
 
-Do not write the Client secret directly into YAML.
-
-Store it in a file.
+Client secret は YAML に直接書かず、ファイルに保存します。
 
 ```bash
 printf '%s' '<Keycloak client secret>' > .quickstart/keycloak_client_secret
 chmod 600 .quickstart/keycloak_client_secret
 ```
 
-In production, use an HTTPS public URL.
+本番では HTTPS の公開 URL を使います。
 
 ```yaml
 server:
@@ -197,23 +197,23 @@ identity_providers:
           - "example.com"
 ```
 
-`profile: keycloak` uses the generic OIDC path with Keycloak-specific naming.
+`profile: keycloak` は、Keycloak 用の名前で generic OIDC path を使います。
 
-The implementation does not apply Google hosted-domain checks to Keycloak.
+実装は Keycloak に Google hosted-domain check を適用しません。
 
-`trust.personal_accounts` is valid only with `profile: google`; do not set it for Keycloak.
+`trust.personal_accounts` は `profile: google` だけで有効です。Keycloak provider には設定しないでください。
 
-Use `subject.strategy: oidc_sub` for Keycloak.
+Keycloak では `subject.strategy: oidc_sub` を使います。
 
-The config validator rejects `email`, `upn`, and `preferred_username` as unstable identity keys.
+config validator は、unstable identity key として `email`、`upn`、`preferred_username` を拒否します。
 
-See [Configuration](configuration.md#identity_providers) for the exact `trust.email_binding` and `trust.allowed_email_domains` rules.
+正確な `trust.email_binding` と `trust.allowed_email_domains` の規則は [Configuration](configuration.md#identity_providers) を参照してください。
 
-## User Registration
+## ユーザー登録
 
-Even after Keycloak login succeeds, the bridge does not issue a token unless the corresponding user is registered in the bridge DB.
+Keycloak login が成功しても、対応するユーザーが bridge DB に登録されていなければ token は発行されません。
 
-Usually, an administrator registers the target user's email.
+通常は、管理者が対象ユーザーの email を登録します。
 
 ```bash
 lore-authctl --config .quickstart/lore-auth.yaml user invite \
@@ -222,38 +222,38 @@ lore-authctl --config .quickstart/lore-auth.yaml user invite \
   --name '<display name>'
 ```
 
-At this point, linkage with the Keycloak account is not complete, so no token is issued.
+この時点では Keycloak account との連携がまだ完了していないため、token は発行されません。
 
-If the user is not invited, no token is issued.
+招待されていない場合、token は発行されません。
 
-After the invitation is created, open `/login` again to create the bridge browser session.
+招待を作成してから、もう一度 `/login` を開くと bridge のブラウザセッションが作成されます。
 
 ```text
 http://localhost:8080/login
 ```
 
-## Behavior
+## 動作
 
-The bridge verifies the Keycloak ID token in the callback.
+bridge は callback で Keycloak ID token を検証します。
 
-After verification, it resolves the provider ID, issuer, and OIDC `sub` subject against `external_identities`.
+検証後、provider ID、issuer、OIDC `sub` subject を `external_identities` と照合します。
 
-If an active binding exists, the browser session or CLI auth session completes.
+active な binding があれば、ブラウザセッションまたは CLI auth session が完了します。
 
-If no active binding exists, the generic invitation-binding policy from [Configuration](configuration.md#identity_providers) applies.
+active な binding がない場合は、[Configuration](configuration.md#identity_providers) の generic invitation-binding policy が適用されます。
 
-If no binding or invitation matches, the bridge does not issue a token and displays the whoami page.
+binding または invitation と照合できない場合は token を発行せず、whoami 画面を表示します。
 
-## Common Failures
+## よくある失敗
 
-If callback handling fails, check that the valid redirect URI in Keycloak exactly matches `identity_providers.providers.keycloak-prod.redirect_url`.
+callback handling が失敗する場合は、Keycloak の valid redirect URI と `identity_providers.providers.keycloak-prod.redirect_url` が完全一致しているか確認します。
 
-If Keycloak reports an invalid client, check that the bridge Client ID matches the Keycloak client and that `client_secret_file` points to a file containing the current secret.
+Keycloak が invalid client を返す場合は、bridge の Client ID が Keycloak client と一致し、`client_secret_file` が現在の secret を含むファイルを指しているか確認します。
 
-If login succeeds at Keycloak but no Lore token is issued, invite the verified email with `lore-authctl --config <cfg> user invite --idp keycloak-prod`, then retry login.
+Keycloak login は成功しているのに Lore token が発行されない場合は、`lore-authctl --config <cfg> user invite --idp keycloak-prod` で verified email を招待してから login をやり直します。
 
-If the invitation is not consumed, confirm that the ID token contains `email` and `email_verified`, and that the email domain is allowed by `trust.allowed_email_domains` when that list is set.
+invitation が消費されない場合は、ID token に `email` と `email_verified` が含まれ、`trust.allowed_email_domains` を設定しているときは email domain がその一覧に含まれるか確認します。
 
-If the bridge reports that `trust.personal_accounts` is only valid for Google, remove it from the Keycloak provider.
+bridge が `trust.personal_accounts` は Google だけで有効だと報告する場合は、Keycloak provider から削除します。
 
-If any of `identity_providers.providers.keycloak-prod.client_id`, `identity_providers.providers.keycloak-prod.client_secret_file`, or `identity_providers.providers.keycloak-prod.redirect_url` is empty, Keycloak login is not enabled.
+`identity_providers.providers.keycloak-prod.client_id`、`identity_providers.providers.keycloak-prod.client_secret_file`、`identity_providers.providers.keycloak-prod.redirect_url` のどれかが空の場合、Keycloak login は有効になりません。

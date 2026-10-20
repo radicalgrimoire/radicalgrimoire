@@ -51,7 +51,7 @@ pushes them with the remaining revisions.
   LFS tracking and a successful `git lfs push` verification before using this
   with large binary assets.
 * This does not replace the server-store backup described in
-  [LORE Server の構築・運用](../../tech/lore-server.md).
+  [LORE Server の構築・運用](../../lore/work/server-215.md).
 
 ## Prerequisites
 

@@ -2,7 +2,7 @@
 
 このページは、`lore-auth-bridge` を使う Lore 環境における、ユーザー認証、repository 認可、管理者権限、group の login IP 制限をまとめた運用仕様です。
 
-個別の設定値は [Configuration](configuration.ja.md)、IdP の設定は [Microsoft Entra ID](entra-id.ja.md) と [Identity Providers](identity-providers.ja.md)、管理コマンドは [Authctl](authctl.ja.md) を参照してください。
+個別の設定値は [Configuration](configuration.md)、IdP の設定は [Microsoft Entra ID](entra-id.md) と [Identity Providers](identity-providers.md)、管理コマンドは [Authctl](authctl.md) を参照してください。
 
 ## 用語
 
@@ -42,7 +42,7 @@ lore-authctl --config "$CONFIG" user invite \
   --name "Alice Example"
 ```
 
-redirect URI、issuer、tenant ID、client secret の設定手順は [Microsoft Entra ID](entra-id.ja.md) を参照してください。
+redirect URI、issuer、tenant ID、client secret の設定手順は [Microsoft Entra ID](entra-id.md) を参照してください。
 
 ## repository 認可
 
@@ -59,7 +59,7 @@ lore-authctl --config "$CONFIG" grant add \
   group:project-a-writers project-a writer
 ```
 
-grant の追加、確認、削除は [Authctl](authctl.ja.md#grant-add) を参照してください。
+grant の追加、確認、削除は [Authctl](authctl.md#grant-add) を参照してください。
 
 ## repository の作成と削除
 
@@ -137,7 +137,7 @@ authn token と authz token は bearer credential です。
 
 token 本文を shell history、CI log、shared terminal、clipboard manager、support log、browser history に残さないでください。
 
-token TTL、signing key rotation、device flow、browser token page の注意点は [Operations](operations.ja.md) と [Signing Keys](signing-keys.ja.md) を参照してください。
+token TTL、signing key rotation、device flow、browser token page の注意点は [Operations](operations.md) と [Signing Keys](signing-keys.md) を参照してください。
 
 ## 運用確認
 

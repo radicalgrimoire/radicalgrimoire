@@ -1,12 +1,12 @@
 # Authctl
 
-[日本語](authctl.ja.md)
+[English](authctl.md)
 
-`lore-authctl` is the administrative CLI for the bridge.
+`lore-authctl` は bridge の管理 CLI です。
 
-It manages users, groups, repositories, grants, signing keys, and manually issued tokens.
+user、group、repository、grant、signing key、手動発行 token を管理します。
 
-The examples below store the config path in a variable.
+以下の例では config path を変数にします。
 
 ```bash
 CONFIG=.quickstart/lore-auth.yaml
@@ -14,7 +14,7 @@ CONFIG=.quickstart/lore-auth.yaml
 
 ## init-db
 
-Create the SQLite database and apply migrations.
+SQLite database を作成し、migration を適用します。
 
 ```bash
 lore-authctl --config "$CONFIG" init-db
@@ -22,13 +22,13 @@ lore-authctl --config "$CONFIG" init-db
 
 ## key generate
 
-Create an RS256 signing key and register public JWK metadata in the DB.
+RS256 signing key を作り、DB に public JWK metadata を登録します。
 
 ```bash
 lore-authctl --config "$CONFIG" key generate --kid manual-1
 ```
 
-`--kid` must match `jwt.active_kid`.
+`--kid` は `jwt.active_kid` と一致させます。
 
 ## key list
 
@@ -38,11 +38,11 @@ lore-authctl --config "$CONFIG" key list
 
 ## user invite
 
-Use `user invite` as the normal onboarding command for IdP login.
+IdP login の通常のオンボーディングには `user invite` を使います。
 
-It creates the bridge account and a pending invitation that reserves identity binding for verified email login in one operation.
+このコマンドは、bridge account の作成と、確認済み email login による identity binding 予約（pending invitation）を 1 操作で行います。
 
-This flow assumes the provider uses `trust.email_binding: verified_email_invitation`.
+この流れは、provider が `trust.email_binding: verified_email_invitation` を使う前提です。
 
 ```bash
 PROVIDER_ID=company-sso
@@ -53,30 +53,57 @@ lore-authctl --config "$CONFIG" user invite \
   --name "Alice Example"
 ```
 
-This registration alone does not issue a token.
+この登録だけでは、まだ token は発行されません。
 
-When the user opens `/login` and the IdP returns a verified email that matches the invitation, that login becomes usable.
+ユーザーが `/login` し、IdP から返された確認済み email が一致した場合、その login で利用できるようになります。
 
-`--idp` reads the provider instance from `identity_providers.providers` and fills the stored provider ID and issuer.
+`--idp` は `identity_providers.providers` の provider instance を読み取り、保存する provider ID と issuer を補完します。
 
-When `identity_providers` is configured, `user invite` requires `--idp`.
+`identity_providers` を設定している場合、`user invite` には `--idp` が必要です。
 
 ## user add
 
-`user add` is a low-level escape hatch.
+`user add` は低レベルの escape hatch です。
 
-It creates only an active bridge principal.
+active な bridge principal だけを作成します。
 
-It does not create an external IdP binding, so the account cannot log in through an IdP as-is.
+external IdP binding は作成しないため、そのままでは IdP 経由で login できません。
 
-Normally, use `user invite` for onboarding.
+通常のオンボーディングには `user invite` を使います。
 
-Use `user add` for pre-provisioning or for deployments that use a subject strategy without email binding.
+`user add` は、事前プロビジョニングや、email binding を使わない subject strategy の環境で使います。
 
 ```bash
 lore-authctl --config "$CONFIG" user add \
   --email manual@example.com \
   --name "Manual User"
+```
+
+## user bind-identity
+
+IdP が確認済み email を返さない場合は、管理者が IdP subject を user に明示的に結び付けます。
+対象の IdP account を管理画面で確認したうえで実行してください。
+
+Entra の `entra_oid_tid` では subject は `<tenant-id>:<object-id>` です。
+
+```bash
+lore-authctl --config "$CONFIG" user bind-identity \
+  --idp entra \
+  --email alice@example.com \
+  --subject "tenant-id:object-id"
+```
+
+同じ binding の再実行は安全です。別 user に結び付いた subject は拒否されます。
+
+複数ユーザーを運用する場合は、`scripts/onboard-entra-user.sh` で account 作成、binding、任意の repository grant をまとめて実行できます。
+
+```bash
+scripts/onboard-entra-user.sh \
+  --email alice@example.com \
+  --name "Alice Example" \
+  --object-id "object-id-from-entra" \
+  --repo gamestudio/sandbox \
+  --role writer
 ```
 
 ## user list
@@ -91,7 +118,7 @@ lore-authctl --config "$CONFIG" user list
 lore-authctl --config "$CONFIG" user disable manual@example.com
 ```
 
-Disabled users are rejected during token exchange.
+disabled user は token exchange で拒否されます。
 
 ## user enable
 
@@ -99,7 +126,7 @@ Disabled users are rejected during token exchange.
 lore-authctl --config "$CONFIG" user enable manual@example.com
 ```
 
-Use `user enable` to restore a disabled user.
+`user enable` は disabled user を復旧するときに使います。
 
 ## group add
 
@@ -108,7 +135,7 @@ lore-authctl --config "$CONFIG" group add artists \
   --description "Artists with repository access"
 ```
 
-Groups are grant subjects.
+group は grant subject になります。
 
 ## group list
 
@@ -122,7 +149,7 @@ lore-authctl --config "$CONFIG" group list
 lore-authctl --config "$CONFIG" group member add artists alice@example.com
 ```
 
-The user argument accepts an email address or user ID.
+user argument には email address または user ID を指定できます。
 
 ## group member remove
 
@@ -136,11 +163,11 @@ lore-authctl --config "$CONFIG" group member remove artists alice@example.com
 lore-authctl --config "$CONFIG" group nest add all-creators artists
 ```
 
-`group nest` creates group-in-group membership.
+`group nest` は group-in-group membership を作ります。
 
-Users in the member group inherit grants assigned to the parent group transitively.
+member group の user は、parent group に付けた grant を推移的に継承します。
 
-Cycles and self-membership are rejected.
+cycle と自己 membership は拒否されます。
 
 ## group nest remove
 
@@ -150,9 +177,11 @@ lore-authctl --config "$CONFIG" group nest remove all-creators artists
 
 ## group network-cidr
 
-Setting a CIDR on a group restricts completion of CLI login for users in that group to matching source IP addresses.
+group に CIDR を設定すると、その group に所属する user は、CIDR のいずれかに一致する接続元 IP からだけ CLI login を完了できます。
 
-Users with no applicable group CIDRs remain unrestricted. CIDRs from all applicable groups are ORed, including CIDRs inherited through parent groups.
+CIDR を設定していない user は、従来どおり IP 制限なしです。
+
+複数 group から適用される CIDR は OR で評価します。ネストした child group の user には parent group の CIDR も適用されます。
 
 ```bash
 lore-authctl --config "$CONFIG" group network-cidr add company-a-network 203.0.113.0/24
@@ -163,17 +192,17 @@ lore-authctl --config "$CONFIG" group network-cidr list company-a-network
 lore-authctl --config "$CONFIG" group network-cidr remove company-a-network 203.0.113.0/24
 ```
 
-CIDRs are stored in normalized form; for example, `203.0.113.9/24` is stored as `203.0.113.0/24`.
+CIDR は正規化して保存されます。たとえば `203.0.113.9/24` は `203.0.113.0/24` として保存されます。
 
-The restriction applies only while completing login. It does not re-evaluate the source IP for repository operations performed with an issued token.
+この制限は login 時だけです。発行済み token による repository 操作の接続元 IP は再判定しません。
 
-Behind a reverse proxy, the gRPC proxy must set `x-lore-client-ip` to `$remote_addr` so the bridge can safely obtain the client IP.
+reverse proxy 配下では、bridge が実 client IP を安全に得られるよう、gRPC proxy が `x-lore-client-ip` に `$remote_addr` を設定する必要があります。
 
 ## repo add
 
-Repositories are normally registered through ReBAC `CreateResource` calls from `loreserver`.
+通常は `loreserver` からの ReBAC `CreateResource` で repository が登録されます。
 
-Use the following command for manual registration.
+手動で登録する場合は次を使います。
 
 ```bash
 lore-authctl --config "$CONFIG" repo add \
@@ -182,9 +211,9 @@ lore-authctl --config "$CONFIG" repo add \
   --lore-repository-id 11111111111111111111111111111111
 ```
 
-The JWT `resources[].resource_id` value is `urc-{lore_repository_id}`.
+JWT claim の `resources[].resource_id` は `urc-{lore_repository_id}` です。
 
-It is not the repository name.
+repo 名ではありません。
 
 ## repo list
 
@@ -201,11 +230,11 @@ lore-authctl --config "$CONFIG" grant add \
   writer
 ```
 
-Subjects use the form `user:<email-or-id>` or `group:<name>`.
+subject は `user:<email-or-id>` または `group:<name>` の形式です。
 
-This documentation uses `writer` for repository operations.
+この文書では repository 操作用に `writer` を使います。
 
-It does not cover using `reader` as a read-only role.
+`reader` を read-only 権限として使う運用は、この文書では扱いません。
 
 ## grant list
 
@@ -226,7 +255,7 @@ lore-authctl --config "$CONFIG" grant remove \
 
 ## check
 
-Check the bridge-side authorization backend decision.
+bridge 側の authorization backend 判定を確認します。
 
 ```bash
 lore-authctl --config "$CONFIG" check \
@@ -235,11 +264,11 @@ lore-authctl --config "$CONFIG" check \
   write
 ```
 
-The command returns `allow` when access is permitted.
+許可されていれば `allow` を返します。
 
 ## token mint-authn
 
-When IdP login is not used, manually issue an authn token.
+IdP login を使わない場合は、authn token を手動発行します。
 
 ```bash
 lore-authctl --config "$CONFIG" token mint-authn \
@@ -247,17 +276,17 @@ lore-authctl --config "$CONFIG" token mint-authn \
   --out .quickstart/authn.jwt
 ```
 
-When `--out` is specified, the token is written to a file with mode `0600`, and no token or login command is printed.
+`--out` を指定すると、token は `0600` の file に書かれ、token 本文と token 入り login command は表示されません。
 
-Without `--out`, the token is printed to stdout.
+`--out` を指定しない場合、token は stdout に表示されます。
 
-If `--print-login-command` is also set, the `lore auth login` command containing the token is printed to stderr.
+さらに `--print-login-command` を明示すると、token 入りの `lore auth login` command を stderr に表示します。
 
-That output can remain in terminal logs, so do not use it in shared terminals or CI logs.
+その出力は terminal log に残り得るため、共有 terminal や CI log では使わないでください。
 
-Pass the issued token to `lore auth login --token-type lore`.
+発行した token は `lore auth login --token-type lore` に渡します。
 
-Use `--ttl 3600s`, `--ttl 15m`, or `--ttl 1h` to override the default authn token TTL.
+既定の authn token TTL を変える場合は、`--ttl 3600s`、`--ttl 15m`、`--ttl 1h` のように指定します。
 
 ```bash
 lore auth login \
@@ -269,9 +298,9 @@ lore auth login \
 
 ## token mint
 
-Manually issue a repository-scoped authz token.
+repo scoped authz token を手動発行します。
 
-During normal repository operations, the Lore CLI obtains authz tokens by calling `ExchangeUserTokenForMultiresourceToken`.
+通常の repository 操作では、Lore CLI が `ExchangeUserTokenForMultiresourceToken` を呼んで authz token を取得します。
 
 ```bash
 lore-authctl --config "$CONFIG" token mint \
@@ -280,8 +309,8 @@ lore-authctl --config "$CONFIG" token mint \
   --role writer
 ```
 
-Without `--out`, `token mint` prints the token to stdout.
+`--out` を指定しない場合、`token mint` は token を stdout に表示します。
 
-It prints a login command only when `--print-login-command` is set.
+token 入り login command を表示するのは、`--print-login-command` を付けた場合だけです。
 
-For browser-issued repository tokens from `/tokens` and `/tokens/mint`, see [Operations](operations.md#web-token-page).
+`/tokens` と `/tokens/mint` で browser から repository token を発行する場合は、[Operations](operations.md#web-token-page) を参照してください。
