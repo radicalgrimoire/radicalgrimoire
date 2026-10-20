@@ -1,7 +1,5 @@
 # TLS
 
-[English](tls.md)
-
 Lore の auth exchange は gRPC over TLS で到達できる必要があります。
 
 bridge の HTTP/JWKS endpoint と、`UrcAuthApi` / `RebacApi` の gRPC endpoint は別です。

@@ -1,7 +1,5 @@
 # 管理 Web UI
 
-[English](admin-ui.md)
-
 管理 Web UI は、login、JWKS、device flow、health check と同じ HTTP process で提供されます。
 
 `admin.admin_emails` に 1 件以上の address がある場合だけ、`/admin` に mount されます。

@@ -1,7 +1,5 @@
 # Authctl
 
-[English](authctl.md)
-
 `lore-authctl` は bridge の管理 CLI です。
 
 user、group、repository、grant、signing key、手動発行 token を管理します。

@@ -1,7 +1,5 @@
 # Configuration
 
-[English](configuration.md)
-
 `lore-auth.yaml` は bridge の HTTP、gRPC、DB、JWT、Lore 連携、ログイン方式、admin UI を設定します。
 
 unknown key は、すべての config object level で parse error になります。typo や未対応 key は、file に残さず削除してください。
@@ -208,43 +206,24 @@ reverse proxy の背後では、trusted proxy policy を実装しない限り、
 
 ```yaml
 identity_providers:
-  default: google
+  default: entra
   providers:
-    google:
+    entra:
       type: oidc
-      profile: google
-      display_name: "Google"
-      issuer: "https://accounts.google.com"
-      client_id: "xxx.apps.googleusercontent.com"
-      client_secret_file: "/etc/lore-auth/google_client_secret"
-      redirect_url: "https://auth.example.com/auth/google/callback"
-      scopes:
-        - openid
-        - email
-        - profile
-      subject:
-        strategy: oidc_sub
-      trust:
-        email_binding: verified_email_invitation
-        hosted_domain:
-          allowed: []
-        personal_accounts: allow
-
-    keycloak-prod:
-      type: oidc
-      profile: keycloak
-      display_name: "Company SSO"
-      issuer: "https://sso.example.com/realms/prod"
-      client_id: "lore-auth-bridge"
-      client_secret_file: "/etc/lore-auth/keycloak_client_secret"
-      redirect_url: "https://auth.example.com/auth/keycloak-prod/callback"
+      profile: entra
+      display_name: "Microsoft Entra ID"
+      issuer: "https://login.microsoftonline.com/<tenant-id>/v2.0"
+      client_id: "<application-client-id>"
+      client_secret_file: "/etc/lore-auth/entra_client_secret"
+      redirect_url: "https://auth.example.com/auth/entra/callback"
       scopes:
         - openid
         - email
         - profile
       pkce: required
       subject:
-        strategy: oidc_sub
+        strategy: entra_oid_tid
+        required_tid: "<tenant-id>"
       trust:
         email_binding: verified_email_invitation
         allowed_email_domains:
@@ -257,23 +236,9 @@ identity_providers:
 
 `default` は `providers` 配下の key を指す必要があります。
 
-`google` や `keycloak-prod` などの provider key は、bridge 内の identity provider instance ID として保存されます。
+`entra` は bridge 内の identity provider instance ID として保存されます。
 
-複数 issuer や複数 tenant を扱う可能性がある場合、provider key に `oidc` のような種別名を使わないでください。
-
-OIDC 系 provider の `redirect_url` は `/auth/{provider}/callback` にします。
-
-Google OIDC の具体的な設定は [Google OIDC](google-oidc.md) を参照してください。
-
-`profile: google` は Google 用の trust policy check を有効にします。
-
-`trust.hosted_domain.allowed` は、Google ID token の `hd` claim で許可する Workspace domain です。
-
-値を入れると、`hd` がその一覧に一致しない login を拒否します。
-
-`trust.personal_accounts: deny` は、`hd` claim を持たない個人 Google アカウントを拒否します。
-
-`trust.hosted_domain.allowed` が空で `trust.personal_accounts` が `deny` でない場合、bridge に登録済みの Workspace アカウントと個人 Google アカウントの両方を許可します。
+Entra ID の `redirect_url` は `/auth/entra/callback` にします。
 
 `trust.email_binding` は、初回 login 時に pending invitation を消費できるかどうかを制御します。
 
@@ -289,6 +254,94 @@ login 全体の allowlist ではありません。
 
 設定した場合、invitation を消費する前に、ID token の email が確認済みで、domain が設定値に含まれている必要があります。
 
-`subject.strategy: oidc_sub` は、永続 identity subject として ID token の `sub` claim を使います。
+`subject.strategy: entra_oid_tid` では、`subject.required_tid` が必須です。永続 identity subject には ID token の `tid` と `oid` claim を使います。
 
-email、preferred username、UPN claim を永続 identity subject として使わないでください。
+## Microsoft Entra ID
+
+Microsoft Entra ID で Web application を登録し、Application client ID、client secret、
+redirect URL を上記の `identity_providers.providers.entra` に設定します。Entra ID login に
+成功しただけではLoreの利用者にはなりません。bridge DBに登録済みのユーザーと照合できた
+場合だけtokenを発行します。
+
+### 必要な値
+
+- **Tenant ID**: bridge が受け入れる Directory tenant ID。
+- **Application client ID**: Entra app registration の application ID。
+- **Client secret**: app registration で作成した secret value。
+- **Redirect URL**: Entra ID login 後にbridgeへ戻すcallback URL。
+- **User email**: verified-email invitation を使う場合にbridgeへ登録するemail。
+
+`client_secret_file` にはsecretの値ではなく、secretを保存したファイルパスを書きます。
+issuerには `https://login.microsoftonline.com/{tenant}/v2.0` 形式のtenant固定URLを使います。
+email、UPN、`preferred_username` を永続identity subjectとして使いません。
+
+Microsoft Entra admin centerの画面名や導線は変わることがあるため、以下は概念手順として
+扱ってください。
+
+- [Register an application in Microsoft Entra ID](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app)
+- [Microsoft identity platform OpenID Connect](https://learn.microsoft.com/en-us/entra/identity-platform/v2-protocols-oidc)
+
+### App registration
+
+Lore userを持つtenant向けのsingle-tenant app registrationを作成します。Application client
+IDとDirectory tenant IDを控え、applicationをWeb applicationとして設定します。
+
+Entra ID側のredirect URIと `identity_providers.providers.entra.redirect_url` は完全一致する
+必要があります。scheme、host、port、path、末尾のslashが異なるとcallbackは失敗します。
+
+ローカルでは次を登録します。
+
+```text
+http://localhost:8080/auth/entra/callback
+```
+
+本番では公開URLに合わせます。
+
+```text
+https://auth.example.com/auth/entra/callback
+```
+
+app registrationのclient secretを作成し、表示されている間にsecret valueを控えます。YAML
+には直接書かず、専用fileに保存します。
+
+```bash
+printf '%s' '<Entra client secret>' > .quickstart/entra_client_secret
+chmod 600 .quickstart/entra_client_secret
+```
+
+### Client secret の検証
+
+callback後に `identity provider login failed` が出る場合、Entra token endpointがbridgeの
+Application client IDとclient secretを受理するか確認します。次のscriptはsecretとaccess
+tokenを表示しません。
+
+```bash
+bash scripts/verify-entra-client-secret.sh \
+  --tenant-id "<tenant-id>" \
+  --client-id "<Application client ID>" \
+  --secret-file "/etc/lore-auth/entra_client_secret"
+```
+
+`OK` の場合、client IDとclient secretはEntraに受理されています。`invalid_client` の場合は、
+secretの値（Secret IDではない）が誤っている、期限切れ、または別のapp registration用です。
+
+### ユーザー登録と動作確認
+
+Entra ID loginが成功しても、対応するユーザーがbridge DBに登録されていなければtokenは
+発行されません。通常は、管理者が対象ユーザーを招待します。
+
+```bash
+lore-authctl --config .quickstart/lore-auth.yaml user invite \
+  --idp entra \
+  --email '<Entra user email>' \
+  --name '<display name>'
+```
+
+招待後に `/login` を開くと、bridgeはcallbackでID tokenを検証し、`tid` を
+`subject.required_tid` と照合します。次にprovider ID、issuer、`tid:oid` subjectを
+`external_identities` と照合します。activeなbindingがあれば、browser sessionまたはCLI
+auth sessionが完了します。
+
+bindingまたはinvitationと照合できない場合はtokenを発行せず、whoami画面を表示します。
+loginが拒否される場合は、redirect URIの完全一致、`subject.required_tid` とID tokenの
+`tid` の一致、招待済みemailを順に確認してください。

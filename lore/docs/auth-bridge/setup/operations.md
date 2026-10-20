@@ -1,7 +1,5 @@
 # Operations
 
-[English](operations.md)
-
 このページは、port、local data、backup、log、recovery、browser token page、device flow の運用リファレンスです。
 
 [Configuration](configuration.md)、[Authctl](authctl.md)、[管理 Web UI](admin-ui.md) と合わせて使います。

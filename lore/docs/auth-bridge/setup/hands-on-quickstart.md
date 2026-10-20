@@ -1,14 +1,12 @@
 # Hands-on Quickstart
 
-[English](hands-on-quickstart.md)
-
 このページでは、IdP を使わない構成で bridge、`loreserver`、`lore` CLI を起動し、repository create から clone までの流れを確認します。
 
 この IdP なしの手順は単体で完結します。必要な前提は下に列挙しており、先に別の setup page を読む必要はありません。
 
 外部 IdP を使わず、`lore-authctl token mint-authn` で authn token を発行します。
 
-IdP login を使う場合は [Identity Providers](identity-providers.md) を参照してください。
+IdP login を使う場合は [Configuration](configuration.md#microsoft-entra-id) を参照してください。
 
 本番の port 公開、backup、log、recovery は、quickstart 完了後に [Operations](operations.md) を読んでください。
 

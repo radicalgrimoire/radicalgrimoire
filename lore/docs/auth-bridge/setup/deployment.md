@@ -1,7 +1,5 @@
 # Deployment
 
-[English](deployment.md)
-
 このページでは、`lore-auth-bridge`、`loreserver`、任意の reverse proxy をどこに置くかを選びます。
 
 [Configuration](configuration.md) の前に読み、port、backup、log、recovery は [Operations](operations.md) を参照します。

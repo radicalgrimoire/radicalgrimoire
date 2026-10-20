@@ -1,97 +1,30 @@
-# Setup Guide
+# Auth Bridge 運用資料
 
-[English](setup-guide.md)
+`lore-auth-bridge` の概要、構成図、用語は [README](README.md) を参照してください。
+このページは、実運用と認証基盤の資料への入口です。
 
-`lore-auth-bridge` の設定項目、TLS/JWKS、`loreserver` 連携、管理 CLI、管理 Web UI の使い方をまとめます。
+## 実運用
 
-`lore-auth-bridge` は Lore の `UrcAuthApi` と `RebacApi` を実装する bridge です。
+- [アカウントとrepository権限の管理](setup/account-management.md) - Entra ID利用者の登録、identity binding、repository grant、確認。
+- [Authctl](setup/authctl.md) - user、group、repository、grant、signing keyを操作するCLIのリファレンス。
+- [Operations](setup/operations.md) - port、データ配置、backup、log、recovery、device flow。
+- [管理 Web UI](setup/admin-ui.md) - `/admin` の有効化、権限、監査ログ。
+- [Lore Server設定](setup/loreserver.md) - bridgeと `loreserver` の連携設定。
+- [Lore Server と Entra認証付きbridgeの構築記録](../../work/server-215.md) - 実機導入の作業記録。
+- [172.20.12.193のアカウント管理記録](../../work/server-193-account.md) - 既存環境の作業記録。
 
-ログインに使う IdP は差し替え可能です。
+## 認証基盤
 
-Google OIDC は、この文書セットで扱う具体例の一つです。
+- [Configuration](setup/configuration.md) - bridgeのHTTP/gRPC、DB、JWT、Entra ID、security設定。
+- [認証・認可の運用仕様](setup/authentication-authorization.md) - token、identity、grant、認可判定の契約。
+- [TLS](setup/tls.md) - HTTP/gRPCの証明書とクライアント信頼。
+- [Signing Keys](setup/signing-keys.md) - JWT signing keyの生成とrotation。
+- [Deployment](setup/deployment.md) - reverse proxy、Tailscale、on-prem、cloudの配置方針。
+- [Tailscale](setup/tailscale.md) - Tailscale越しに公開する場合の設定。
+- [Entra ID連携の変更根拠と検証記録](setup/entra-id-integration-evidence.md)
+- [Entra ID対応: bridge更新履歴と根拠](setup/entra-id-bridge-update-history.md)
 
-## 読む順番
+## 開発・動作確認
 
-次の順に読みます。
-
-1. [構成要素](#構成要素) で bridge、`loreserver`、Lore CLI のつながりを把握します。
-2. [Hands-on Quickstart](setup/hands-on-quickstart.md) で、IdP を使わない単体完結の全体フローを体験します。
-3. 本番向けの形を個別ページで仕上げます。
-
-本番向けの設定ページ:
-
-- [Deployment](setup/deployment.md)
-- [Configuration](setup/configuration.md)
-- [認証・認可の運用仕様](setup/authentication-authorization.md)
-- [Operations](setup/operations.md)
-- [TLS](setup/tls.md)
-- [Signing Keys](setup/signing-keys.md)
-- [Loreserver](setup/loreserver.md)
-- [Lore Server と Entra 認証付き bridge の構築](../../work/server-215.md)
-- [Entra ID 連携の変更根拠と検証記録](setup/entra-id-integration-evidence.md)
-- [Entra ID 対応: bridge 更新履歴と根拠](setup/entra-id-bridge-update-history.md)
-- [Authctl](setup/authctl.md)
-- [管理 Web UI](setup/admin-ui.md)
-
-IdP 連携を使う場合は、次も読みます。
-
-- [Identity Providers](setup/identity-providers.md)
-  - [Google OIDC](setup/google-oidc.md)（Google を使う場合の例）
-  - [Microsoft Entra ID](setup/entra-id.md)（Entra tenant の設定）
-  - [Keycloak](setup/keycloak.md)（Keycloak realm と client の設定）
-
-Tailscale 越しに bridge と Lore remote を公開する場合は、先に [Deployment](setup/deployment.md#tailscale--vpn-mesh) を読み、その後に [Tailscale](setup/tailscale.md) を読みます。
-
-## 構成要素
-
-bridge を使う構成は、主に次の要素で成り立ちます。
-
-全体図と用語集は [README](README.md#これは何か--どう接続するか) を参照してください。
-
-- **bridge HTTP**：JWKS、ブラウザログイン、device flow、health check を提供する。
-- **bridge gRPC**：`UrcAuthApi` と `RebacApi` を TLS で提供する。
-- **loreserver**：auth 有効化状態で bridge の JWKS と auth gRPC endpoint を使う。
-- **lore CLI**：authn token を保存し、repo 操作時に authz token を bridge から交換取得する。
-
-## ログインとユーザー登録
-
-bridge は、Lore CLI が使う authn token を発行します。
-
-authn token の元になるユーザー identity は、設定した IdP から取得するか、管理 CLI で登録します。
-
-`172.20.12.193` で Entra ID ユーザーを作成して repository 権限を付与する場合は、
-[Lore アカウントの作成](../../work/server-193-account.md) を使用します。
-
-IdP login を使う場合、ユーザーはブラウザでログインします。
-
-bridge は IdP から受け取った verified external identity を、予約済みの bridge user に bind します。
-
-登録されていないユーザーには token を発行しません。
-
-IdP login では、管理者が `lore-authctl --config <cfg> user invite --idp <provider-id> --email <email>` でユーザーの email を事前登録できます。
-
-このオンボーディングでは `user invite` を使います。
-
-`user add` は、email binding login に依存しない account 向けの低レベル escape hatch です。
-
-登録したユーザーが初回 login し、IdP から返された確認済み email が一致した場合、その login で利用できるようになります。
-
-IdP login を使わない場合は、管理 CLI で authn token を発行できます。
-
-この場合、管理者が `lore-authctl --config <cfg> token mint-authn <email>` で token を発行し、`lore auth login --token-type lore` に渡して Lore CLI に登録します。
-
-## 運用設定の流れ
-
-運用では、deployment pattern、bridge の HTTP endpoint、gRPC endpoint、SQLite database、JWT issuer/audience、RS256 signing key、`loreserver` 側の auth 設定をそろえます。
-
-IdP login を使う場合は、IdP 側の client 設定と bridge 側の設定を一致させます。
-
-ユーザーとリポジトリ権限は `lore-authctl` で管理します。
-
-machine layout と storage pattern は [Deployment](setup/deployment.md) で選びます。
-
-port 公開、data 配置、backup、log、recovery 手順は [Operations](setup/operations.md) にまとめます。
-
-## 全体フローの確認
-
-bridge、`loreserver`、`lore` CLI の接続から repository create、clone までの確認手順は、単体完結の [Hands-on Quickstart](setup/hands-on-quickstart.md) にあります。
+- [Hands-on Quickstart](setup/hands-on-quickstart.md) - IdPを使わない単体完結の確認手順。
+- [Lore JWT claim contractの検証](developing/claim-contract-verification.md) - Lore binary、bridge、またはIdP構成を変更した場合のJWT互換性確認。

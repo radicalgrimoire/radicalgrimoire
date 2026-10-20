@@ -1,7 +1,5 @@
 # Tailscale
 
-[English](tailscale.md)
-
 このページでは、Tailscale 越しに bridge と Lore remote を公開する場合に追加で確認する設定を扱います。
 
 この構成では、bridge と Lore remote を public internet に出しません。

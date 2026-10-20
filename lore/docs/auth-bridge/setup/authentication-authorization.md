@@ -2,7 +2,7 @@
 
 このページは、`lore-auth-bridge` を使う Lore 環境における、ユーザー認証、repository 認可、管理者権限、group の login IP 制限をまとめた運用仕様です。
 
-個別の設定値は [Configuration](configuration.md)、IdP の設定は [Microsoft Entra ID](entra-id.md) と [Identity Providers](identity-providers.md)、管理コマンドは [Authctl](authctl.md) を参照してください。
+個別の設定値とMicrosoft Entra IDの設定は [Configuration](configuration.md#microsoft-entra-id)、管理コマンドは [Authctl](authctl.md) を参照してください。
 
 ## 用語
 
@@ -42,7 +42,7 @@ lore-authctl --config "$CONFIG" user invite \
   --name "Alice Example"
 ```
 
-redirect URI、issuer、tenant ID、client secret の設定手順は [Microsoft Entra ID](entra-id.md) を参照してください。
+redirect URI、issuer、tenant ID、client secret の設定手順は [Configuration](configuration.md#microsoft-entra-id) を参照してください。
 
 ## repository 認可
 

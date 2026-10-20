@@ -1,7 +1,5 @@
 # Loreserver
 
-[English](loreserver.md)
-
 このページは、auth 有効化状態の `loreserver` が bridge を使うための設定です。
 
 bridge 側の設定は [Configuration](configuration.md) を参照してください。

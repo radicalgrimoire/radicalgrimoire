@@ -1,7 +1,5 @@
 # Signing Keys
 
-[English](signing-keys.md)
-
 bridge は authn token と authz token を RS256 で署名します。
 
 loreserver は bridge の JWKS endpoint から public key を取得し、JWT を検証します。

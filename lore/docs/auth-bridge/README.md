@@ -4,7 +4,7 @@
 
 Lore サーバをチームで共有しようとすると、Lore が外部サービスに委ねている問題に突き当たります — 誰がログインでき、誰がどの repository に触れてよいのか。Lore には CLI の `lore auth login` フローと `loreserver` の JWT 検証、つまり利用する側の両端は備わっていますが、その token を**発行する側** — IdP 連携、ユーザー管理、権限管理 — は含まれていません。
 
-`lore-auth-bridge` はその隙間を埋めます。チームメンバーは普段使っている認証基盤(Google、Microsoft Entra ID、Keycloak などの OIDC IdP)でログインし、bridge が Lore の要求する token を発行します。ユーザー・グループ・repository ごとの権限は bridge で一元管理します。
+`lore-auth-bridge` はその隙間を埋めます。チームメンバーは Microsoft Entra ID でログインし、bridge が Lore の要求する token を発行します。ユーザー・グループ・repository ごとの権限は bridge で一元管理します。
 
 実装は、Lore の UCS Auth / ReBAC protocol を実装する単一の Rust サービスです。OIDC ログイン、repository 単位の token exchange、JWKS 配信、repository lifecycle の同期を提供し、SQLite と ReBAC 認可エンジンの上で動作します。
 
@@ -20,7 +20,7 @@ Lore サーバをチームで共有しようとすると、Lore が外部サー�
 
 ```text
  ① lore auth login を実行し、開いたブラウザで
-    IdP(Google など)のサインインを承認
+    Microsoft Entra ID のサインインを承認
       │
       ▼
  ② あとは普段どおり lore clone / push
@@ -31,7 +31,7 @@ Lore サーバをチームで共有しようとすると、Lore が外部サー�
 次の図は、このステップの裏側でコンポーネントが Lore の UCS Auth / ReBAC protocol を通じてどう接続されるかを示した技術要素の図です。ユーザーが直接触れるのは上の ①② だけです。
 
 ```text
- Browser ◄──── (1) OIDC ログイン ────► IdP (Google / Entra ID / Keycloak)
+ Browser ◄──── (1) OIDC ログイン ────► Microsoft Entra ID
     │
     │ (2) ログイン完了。bridge が authn token を発行
     ▼
@@ -96,10 +96,6 @@ repository 操作時、Lore はその authn token を `UrcAuthApi` で短命の 
 - [Loreserver](setup/loreserver.md)
 - [Authctl](setup/authctl.md)
 - [管理 Web UI](setup/admin-ui.md)
-- [Identity Providers](setup/identity-providers.md)
-  - [Google OIDC](setup/google-oidc.md)
-  - [Microsoft Entra ID](setup/entra-id.md)
-  - [Keycloak](setup/keycloak.md)
 
 ## 実行ファイル
 
@@ -213,7 +209,7 @@ target/release/lore-authctl --config configs/lore-auth.example.yaml user invite 
   --name "Alice Example"
 ```
 
-詳しくは [Identity Providers](setup/identity-providers.md) と [Authctl](setup/authctl.md) を参照してください。
+詳しくは [Configuration](setup/configuration.md#microsoft-entra-id) と [Authctl](setup/authctl.md) を参照してください。
 
 ## claim contract の検証
 
