@@ -110,52 +110,9 @@ sudo systemctl reload nginx
 
 ## Windows runner に bridge certificate を信頼させる
 
-`lore-auth-bridge-grpc-ca.pem` は CA certificate を新規発行したものではない。bridge が
-提示する自己署名 TLS server certificate
-`/home/mgs/lore-auth/grpc/tls.crt` の配布用 copy である。certificate の subject は
-`CN=172.20.12.193`、SAN は `172.20.12.193`、`localhost`、`127.0.0.1` である。
-
-runner または管理用 Windows host で PEM copy を取得する。
-
-```powershell
-$certificatePath = "$env:TEMP\lore-auth-bridge-grpc-ca.pem"
-scp mgs@172.20.12.193:/home/mgs/lore-auth/grpc/tls.crt $certificatePath
-```
-
-取得元と copy の SHA-256 fingerprint が一致することを確認する。
-
-```powershell
-ssh mgs@172.20.12.193 `
-  "openssl x509 -in /home/mgs/lore-auth/grpc/tls.crt -noout -fingerprint -sha256"
-certutil.exe -hashfile $certificatePath SHA256
-```
-
-gRPC client は `NETWORK SERVICE` として実行されるため、certificate は Current User
-store ではなく Local Machine の Trusted Root store に import する。管理者 PowerShell
-で実行する。
-
-```powershell
-certutil.exe -addstore -f Root $certificatePath
-```
-
-追加を確認する。
-
-```powershell
-Get-ChildItem Cert:\LocalMachine\Root |
-  Where-Object Subject -eq 'CN=172.20.12.193'
-```
-
-certificate file は import 後に削除する。TLS verification を無効化する設定や
-`--insecure` を CI workflow に追加してはならない。
-
-```powershell
-Remove-Item -LiteralPath $certificatePath -Force
-```
-
-bridge certificate を更新する場合は、新しい certificate をすべての runner の Local
-Machine store に先に import してから bridge / nginx を切り替える。切替後に古い
-certificate を削除する。これにより CI の gRPC login が certificate renewal 中に失敗
-しない。
+runner certificate の作成、配布、更新は
+[172.20.12.193: bridge TLS certificate の運用](./server-193-bridge-tls.md) に従う。
+TLS verification を無効化する設定や `--insecure` を CI workflow に追加してはならない。
 
 ## GitHub Actions workflow
 
