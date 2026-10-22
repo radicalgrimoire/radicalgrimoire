@@ -1,5 +1,24 @@
 # 172.20.12.215: 未完了作業
 
+## nginx `lore-auth` configuration の学習用記録
+
+`/etc/nginx/sites-available/lore-auth` は Lore auth bridge の public HTTP / gRPC endpoint を
+公開する nginx configuration である。運用変更とは別に、後学のため設定全体と各 directive
+の役割を説明する記録を作成する。
+
+記録する項目:
+
+1. `8080` HTTP server と `8081` HTTP/2 gRPC server の用途。
+2. `ssl_certificate` / `ssl_certificate_key` と Lore Server certificate の共用。
+3. `proxy_pass` と `grpc_pass` の役割、および bridge の loopback listeners
+   `127.0.0.1:18080` / `127.0.0.1:18081` との関係。
+4. `grpc_ssl_verify off` が nginx から loopback upstream への TLS verification だけに
+   適用され、外部 client の TLS verification を無効化しないこと。
+5. ReBAC API location の `allow` / `deny` による access control。
+6. `grpc_set_header x-lore-client-ip $remote_addr` と、Service Account group CIDR
+   判定における trusted proxy metadata の扱い。
+7. configuration backup、`nginx -t`、reload、rollback の運用手順。
+
 ## TLS certificate の計画更新
 
 ### 期限
