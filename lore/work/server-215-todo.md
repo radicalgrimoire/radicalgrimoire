@@ -1,5 +1,44 @@
 # 172.20.12.215: 未完了作業
 
+## Jenkins 本番 runner の source CIDR 確認
+
+GitHub Actions self-hosted runner からの検証では、実測 source IP
+`172.20.16.41` を `jenkins-runners` group に `172.20.16.41/32` として登録済みである。
+
+Jenkins の物理 Windows runner は当初 `172.20.11.161` として案内されたが、Jenkins job
+からの Service Account login は未検証である。Jenkins を実行する前に、bridge / nginx
+access log で実際の source IP を確認し、必要なら group に CIDR を追加する。
+
+```bash
+/opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml \
+  group network-cidr add jenkins-runners <JENKINS-RUNNER-IP>/32
+```
+
+既存の `172.20.16.41/32` を削除してはならない。GitHub Actions 検証も同じ Service
+Account を使用しているため、Jenkins の CIDR は追加する。
+
+## Jenkins writer 操作の検証
+
+`jenkins-user` は `Watch` に `writer` grant を持ち、GitHub Actions から Service Account
+login と clone が成功済みである。実際の Jenkins runner からの commit / push は未検証で
+あるため、専用 test repository または承認済み branch で writer 操作を確認する。
+
+## Service Account credential rotation 手順
+
+`jenkins-user` の client secret が漏えいした場合、または定期更新する場合は、次を実行する。
+
+```bash
+/opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml \
+  service-account rotate \
+  --client-id jenkins-user
+```
+
+出力される新しい三列目を GitHub Actions repository secret と Jenkins credential store の
+両方に更新する。旧 secret は rotation と同時に無効になるため、CI credential store を
+更新してから login / clone を検証する。
+
 ## nginx `lore-auth` configuration の学習用記録
 
 `/etc/nginx/sites-available/lore-auth` は Lore auth bridge の public HTTP / gRPC endpoint を
