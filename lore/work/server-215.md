@@ -100,7 +100,38 @@ sudo install -o mgs -g mgs -m 0755 \
   /opt/lore/bin/lore-authctl
 ```
 
-### 3.1 既存稼働環境との Lore binary 互換
+### 3.1 Service Account 対応版への更新
+
+2026-10-22 に Service Account 機能を含む
+[`lore-auth-bridge` commit `ee81aa6`](https://github.com/radicalgrimoire/lore-auth-bridge/commit/ee81aa6)
+の release binary を適用した。215 上の既存 source tree は未コミットの導入作業を含むため
+変更せず、193 で稼働確認済みの binary を staging directory 経由で配置した。
+
+更新前の binary は次の archive に保存されている。
+
+```text
+/opt/lore/archive/20261022T045441Z-service-account
+```
+
+更新後は `lore-auth` を restart し、health、JWKS、gRPC listener、`service_accounts`
+SQLite migration を確認した。
+
+```bash
+sudo systemctl restart lore-auth
+sudo systemctl is-active lore-auth
+
+/opt/lore/bin/lore-authctl service-account --help
+curl --fail http://127.0.0.1:18080/healthz
+curl --fail http://127.0.0.1:18080/.well-known/jwks.json
+sudo ss -ltnp | grep -E ':(18080|18081)\b'
+```
+
+Service Account の作成、CIDR 制限、CI certificate trust、Jenkins の secret 登録は
+[CI Service Account による Lore 利用](./server-193-service-account.md) と
+[bridge TLS certificate の運用](./server-193-bridge-tls.md) を 215 の endpoint と
+runner information に合わせて実施する。
+
+### 3.2 既存稼働環境との Lore binary 互換
 
 `172.20.12.193` は既存の正式運用 Lore Server である。
 215 では同じ client/server wire behavior を使うため、**Lore と loreserver のみ**を
