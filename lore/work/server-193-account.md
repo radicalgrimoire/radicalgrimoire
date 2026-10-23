@@ -52,41 +52,60 @@ Entra 管理センターで対象ユーザーを開き、次の情報を確認�
    ssh mgs@172.20.12.193
    ```
 
-2. 運用スクリプトが利用可能であることを確認します。
+2. `lore-authctl` と既存 account を確認します。
 
    ```bash
-   test -x /home/mgs/lore-auth/bin/onboard-entra-user.sh
+   AUTHCTL="/home/mgs/lore-auth/bin/lore-authctl"
+   CONFIG="/home/mgs/lore-auth/lore-auth.yaml"
+
+   "$AUTHCTL" --config "$CONFIG" user list
    ```
 
-3. 対象者の email、表示名、Entra Object ID、repository、role を指定して実行します。
+3. bridge user を作成します。
 
    ```bash
-   /home/mgs/lore-auth/bin/onboard-entra-user.sh \
+   "$AUTHCTL" --config "$CONFIG" user add \
      --email "alice@example.com" \
-     --name "Alice Example" \
-     --object-id "11111111-2222-3333-4444-555555555555" \
-     --repo "gamestudio/UnrealEngine" \
-     --role writer
+     --name "Alice Example"
    ```
 
-   このスクリプトは、次を実行します。
+   email がすでに `user list` に存在する場合、この command は実行しません。
 
-   1. email に対応する bridge user がなければ作成する。
-   2. Entra subject `<tenant-id>:<object-id>` を user に bind する。
-   3. 指定 repository に指定 role の grant がなければ追加する。
+4. Entra subject `<tenant-id>:<object-id>` を bridge user に bind します。
 
-   同じユーザー、identity binding、grant に対する再実行は安全です。別の user に
-   すでに紐付いている Entra subject は拒否されます。
+   ```bash
+   "$AUTHCTL" --config "$CONFIG" user bind-identity \
+     --idp entra \
+     --email "alice@example.com" \
+     --subject "<tenant-id>:11111111-2222-3333-4444-555555555555"
+   ```
 
-4. 実行結果に、次のように user と grant が表示されることを確認します。
+   対象の Entra subject が別の bridge user にすでに紐付いている場合、command は拒否
+   されます。この場合は binding を変更せず、対象の Entra Object ID と既存 account を
+   確認します。
+
+5. repository 権限を付与します。
+
+   ```bash
+   "$AUTHCTL" --config "$CONFIG" grant add \
+     "user:alice@example.com" \
+     "gamestudio/UnrealEngine" \
+     writer
+   ```
+
+   既存 grant を確認する場合は、先に次を実行します。
+
+   ```bash
+   "$AUTHCTL" --config "$CONFIG" grant list "gamestudio/UnrealEngine"
+   ```
+
+6. 登録結果を確認します。
 
    ```text
-   Entra user ready: alice@example.com (<tenant-id>:<object-id>)
-   Repository grant: gamestudio/UnrealEngine writer
+   <user-id>    alice@example.com    Alice Example
    ```
 
-repository 権限を後から付ける場合は、同じコマンドを `--repo` と `--role` を指定して
-再実行します。identity だけを登録する場合は `--repo` を省略します。
+identity だけを登録する場合は、手順 5 を省略します。
 
 ## 登録結果を確認する
 
