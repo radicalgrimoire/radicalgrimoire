@@ -55,16 +55,17 @@ Entra 管理センターで対象ユーザーを開き、次の情報を確認�
 2. `lore-authctl` と既存 account を確認します。
 
    ```bash
-   AUTHCTL="/home/mgs/lore-auth/bin/lore-authctl"
-   CONFIG="/home/mgs/lore-auth/lore-auth.yaml"
-
-   "$AUTHCTL" --config "$CONFIG" user list
+   /home/mgs/lore-auth/bin/lore-authctl \
+     --config /home/mgs/lore-auth/lore-auth.yaml \
+     user list
    ```
 
 3. bridge user を作成します。
 
    ```bash
-   "$AUTHCTL" --config "$CONFIG" user add \
+   /home/mgs/lore-auth/bin/lore-authctl \
+     --config /home/mgs/lore-auth/lore-auth.yaml \
+     user add \
      --email "alice@example.com" \
      --name "Alice Example"
    ```
@@ -74,7 +75,9 @@ Entra 管理センターで対象ユーザーを開き、次の情報を確認�
 4. Entra subject `<tenant-id>:<object-id>` を bridge user に bind します。
 
    ```bash
-   "$AUTHCTL" --config "$CONFIG" user bind-identity \
+   /home/mgs/lore-auth/bin/lore-authctl \
+     --config /home/mgs/lore-auth/lore-auth.yaml \
+     user bind-identity \
      --idp entra \
      --email "alice@example.com" \
      --subject "<tenant-id>:11111111-2222-3333-4444-555555555555"
@@ -87,7 +90,9 @@ Entra 管理センターで対象ユーザーを開き、次の情報を確認�
 5. repository 権限を付与します。
 
    ```bash
-   "$AUTHCTL" --config "$CONFIG" grant add \
+   /home/mgs/lore-auth/bin/lore-authctl \
+     --config /home/mgs/lore-auth/lore-auth.yaml \
+     grant add \
      "user:alice@example.com" \
      "gamestudio/UnrealEngine" \
      writer
@@ -96,7 +101,9 @@ Entra 管理センターで対象ユーザーを開き、次の情報を確認�
    既存 grant を確認する場合は、先に次を実行します。
 
    ```bash
-   "$AUTHCTL" --config "$CONFIG" grant list "gamestudio/UnrealEngine"
+   /home/mgs/lore-auth/bin/lore-authctl \
+     --config /home/mgs/lore-auth/lore-auth.yaml \
+     grant list "gamestudio/UnrealEngine"
    ```
 
 6. 登録結果を確認します。
