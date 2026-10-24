@@ -1,0 +1,78 @@
+name: delete-image
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      source_ref:
+        required: false
+        type: string
+        default: 'main'
+      build_path:
+        required: true
+        type: string
+
+jobs:
+  delete-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_ref }}
+
+      - name: Load build configuration
+        id: build
+        run: |
+          set -a
+          . ./build/${{ inputs.build_path }}/.env
+          set +a
+          echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Delete existing image version
+        uses: actions/github-script@v8
+        env:
+          IMAGE_NAME: ${{ steps.build.outputs.image_name }}
+          VERSION: ${{ inputs.version }}
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get(context.repo);
+            const isOrganization = repository.owner.type === 'Organization';
+            const packageName = `${context.repo.repo}/${process.env.IMAGE_NAME}`.toLowerCase();
+            const parameters = {
+              package_type: 'container',
+              package_name: packageName,
+              ...(isOrganization ? { org: context.repo.owner } : { username: context.repo.owner }),
+            };
+            const listVersions = isOrganization
+              ? github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg
+              : github.rest.packages.getAllPackageVersionsForPackageOwnedByUser;
+            const deleteVersion = isOrganization
+              ? github.rest.packages.deletePackageVersionForOrg
+              : github.rest.packages.deletePackageVersionForUser;
+
+            let versions;
+            try {
+              versions = await github.paginate(listVersions, {
+                ...parameters,
+                state: 'active',
+                per_page: 100,
+              });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              core.warning(`Package ${packageName} was not found or is not visible to GITHUB_TOKEN; no existing version was deleted.`);
+              return;
+            }
+
+            const matchingVersions = versions.filter(version =>
+              version.metadata?.container?.tags?.includes(process.env.VERSION)
+            );
+            core.info(`Found ${matchingVersions.length} existing image version(s) tagged ${process.env.VERSION}.`);
+            for (const version of matchingVersions) {
+              core.info(`Deleting ${packageName} version ${version.id} (tags: ${version.metadata.container.tags.join(', ')}).`);
+              await deleteVersion({ ...parameters, package_version_id: version.id });
+            }

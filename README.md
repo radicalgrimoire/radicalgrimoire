@@ -12,6 +12,7 @@ The following definitions are called by
 
 - [build.yml](.github/workflows/build.yml): Build, test, and upload an image artifact.
 - [get-version.yml](.github/workflows/get-version.yml): Extract image version outputs.
+- [delete-image.yml](.github/workflows/delete-image.yml): Delete existing GHCR image versions with the exact version tag.
 - [publish.yml](.github/workflows/publish.yml): Publish the image to GHCR.
 - [scan.yml](.github/workflows/scan.yml): Scan the image artifact with Trivy.
 
@@ -21,6 +22,21 @@ the caller's `scripts/summarize_trivy.py`. Checkout intentionally targets the
 calling repository at `source_ref`, not this repository. Runs, artifacts,
 `GITHUB_TOKEN` permissions, secrets, variables, and the GHCR image namespace
 remain associated with the caller.
+
+Publishing uses the version tag without a workflow run number, plus `latest`
+and, for scheduled runs, `nightly`. The caller runs `get-version.yml`, then
+`delete-image.yml`, then `publish.yml`. Deletion is separate from publishing and
+only runs once the version is available and the required scan succeeds (or is
+skipped for services without a scan). It removes any existing GHCR image version
+carrying the exact version tag. This removes
+all tags attached to that image version, not just the version tag; tags are
+recreated by the subsequent pushes and can remain absent if publishing fails.
+The caller's `GITHUB_TOKEN` needs package admin access to delete versions
+(automatically granted for packages created by that repository's workflow),
+in addition to `packages: write`. Public versions with more than 5,000 downloads
+cannot be deleted through the API; deletion errors stop publication. The caller
+serializes builds for the same repository and build path across deletion and
+publication; other callers should provide equivalent concurrency control.
 
 Deploy these files to this repository's `main` branch before switching the
 `docker-helix-p4` callers and removing their local copies.

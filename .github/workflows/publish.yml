@@ -77,9 +77,9 @@ jobs:
           VERSION="${{ inputs.version }}"
           echo "$IMAGE_NAME version (for tag): $VERSION"
 
-          # Version and build number tag
-          docker tag "$IMAGE_NAME" $IMAGE_ID:$VERSION.$GITHUB_RUN_NUMBER
-          docker push $IMAGE_ID:$VERSION.$GITHUB_RUN_NUMBER
+          # Version tag
+          docker tag "$IMAGE_NAME" "$IMAGE_ID:$VERSION"
+          docker push "$IMAGE_ID:$VERSION"
 
           # Latest tag
           docker tag "$IMAGE_NAME" $IMAGE_ID:${{ env.TAG_LATEST }}
