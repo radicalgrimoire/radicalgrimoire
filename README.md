@@ -38,6 +38,12 @@ cannot be deleted through the API; deletion errors stop publication. The caller
 serializes builds for the same repository and build path across deletion and
 publication; other callers should provide equivalent concurrency control.
 
+Temporary deletion test: publishing currently uses `VERSION.GITHUB_RUN_NUMBER`
+and adds a run-specific image label to ensure a distinct digest. The caller
+bypasses deletion while this second image version is created. Restore the
+unnumbered tag, remove the test label step, and reconnect deletion after verifying
+that both image versions exist.
+
 Deploy these files to this repository's `main` branch before switching the
 `docker-helix-p4` callers and removing their local copies.
 
