@@ -62,17 +62,6 @@ jobs:
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Create distinct image for deletion test
-        run: |
-          set -a
-          . ./build/${{ inputs.build_path }}/.env
-          set +a
-          printf 'FROM %s\n' "$IMAGE_NAME" |
-            docker build \
-              --label "io.github.radicalgrimoire.deletion-test=$GITHUB_RUN_ID.$GITHUB_RUN_ATTEMPT" \
-              --tag "$IMAGE_NAME:deletion-test" -
-          docker tag "$IMAGE_NAME:deletion-test" "$IMAGE_NAME"
-
       - name: Set current datetime as env variable
         env:
           TZ: 'Asia/Tokyo'
@@ -88,9 +77,9 @@ jobs:
           VERSION="${{ inputs.version }}"
           echo "$IMAGE_NAME version (for tag): $VERSION"
 
-          # Temporary numbered tag for deletion testing
-          docker tag "$IMAGE_NAME" "$IMAGE_ID:$VERSION.$GITHUB_RUN_NUMBER"
-          docker push "$IMAGE_ID:$VERSION.$GITHUB_RUN_NUMBER"
+          # Version tag
+          docker tag "$IMAGE_NAME" "$IMAGE_ID:$VERSION"
+          docker push "$IMAGE_ID:$VERSION"
 
           # Latest tag
           docker tag "$IMAGE_NAME" $IMAGE_ID:${{ env.TAG_LATEST }}
