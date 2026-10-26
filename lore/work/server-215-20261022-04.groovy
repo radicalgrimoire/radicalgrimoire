@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'windows'
-    }
+    agent any
 
     parameters {
         string(
@@ -14,45 +12,62 @@ pipeline {
             defaultValue: 'hoge',
             description: 'Lore repository to clone. The service account must have a grant for this repository.'
         )
+        string(
+            name: 'LORE_CLONE_PATH',
+            defaultValue: 'D:\\SAMPLE',
+            description: 'Optional absolute destination path. Leave empty to clone into the Jenkins workspace.'
+        )
     }
 
+    // Replace placeholders through Jenkins credentials or runtime environment injection before production use.
     environment {
-        LORE_CLIENT_ID = 'jenkins-user'
-        LORE_AUTH_URL = 'https://172.20.12.215:8081'
-        LORE_REMOTE_URL = 'lore://172.20.12.215:41337'
+        LORE_CLIENT_ID = 'replace-with-service-account-client-id'
+        LORE_CLIENT_SECRET = 'replace-with-service-account-client-secret'
+        LORE_AUTH_URL = 'https://auth.example.com:8081'
+        LORE_REMOTE_URL = 'lore://lore.example.com:41337'
     }
 
     stages {
         stage('Login and clone Lore repository') {
             steps {
-                withCredentials([
-                    string(
-                        credentialsId: 'lore-jenkins-user-client-secret',
-                        variable: 'LORE_CLIENT_SECRET'
-                    )
-                ]) {
-                    withEnv([
+                withEnv([
                         "LORE_CLI=${params.LORE_CLI_PATH}",
-                        "LORE_REPOSITORY=${params.LORE_REPOSITORY}"
-                    ]) {
+                        "LORE_REPOSITORY=${params.LORE_REPOSITORY}",
+                        "LORE_CLONE_PATH=${params.LORE_CLONE_PATH}"
+                ]) {
                         powershell '''
                             $ErrorActionPreference = 'Stop'
 
-                            if ([string]::IsNullOrWhiteSpace($env:LORE_CLIENT_SECRET)) {
-                                throw "The Jenkins credential lore-jenkins-user-client-secret is not configured."
+                            foreach ($requiredVariable in @(
+                                'LORE_CLIENT_ID',
+                                'LORE_CLIENT_SECRET',
+                                'LORE_AUTH_URL',
+                                'LORE_REMOTE_URL'
+                            )) {
+                                if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($requiredVariable))) {
+                                    throw "The Jenkins environment variable $requiredVariable is not configured."
+                                }
                             }
                             if (-not (Test-Path -LiteralPath $env:LORE_CLI)) {
                                 throw "Lore CLI was not found at $env:LORE_CLI."
                             }
-                            if (-not (Get-ChildItem Cert:\\LocalMachine\\Root |
-                                    Where-Object Subject -eq 'CN=172.20.12.215')) {
-                                throw "The 172.20.12.215 certificate is not trusted in LocalMachine Root."
+                            $clonePath = if ([string]::IsNullOrWhiteSpace($env:LORE_CLONE_PATH)) {
+                                Join-Path $env:WORKSPACE $env:LORE_REPOSITORY
+                            }
+                            else {
+                                $env:LORE_CLONE_PATH
                             }
 
-                            $clonePath = Join-Path $env:WORKSPACE $env:LORE_REPOSITORY
+                            if (-not [System.IO.Path]::IsPathRooted($clonePath)) {
+                                throw "LORE_CLONE_PATH must be an absolute path: $clonePath"
+                            }
+
                             if (Test-Path -LiteralPath $clonePath) {
                                 throw "Clone destination already exists: $clonePath"
                             }
+
+                            $cloneParent = Split-Path -Parent $clonePath
+                            New-Item -ItemType Directory -Force -Path $cloneParent | Out-Null
 
                             $tokenStoreRoot = Join-Path `
                                 ([System.IO.Path]::GetTempPath()) `
@@ -64,7 +79,7 @@ pipeline {
                             try {
                                 & $env:LORE_CLI auth login `
                                     --token-type service-account `
-                                    --token "$env:LORE_CLIENT_ID`:$env:LORE_CLIENT_SECRET" `
+                                    --token "${env:LORE_CLIENT_ID}:$env:LORE_CLIENT_SECRET" `
                                     --auth-url $env:LORE_AUTH_URL `
                                     $env:LORE_REMOTE_URL
 
@@ -88,11 +103,11 @@ pipeline {
                                 Write-Host "Lore clone completed successfully: $clonePath"
                             }
                             finally {
-                                Remove-Item -LiteralPath $tokenStoreRoot -Recurse -Force `
-                                    -ErrorAction SilentlyContinue
+                                if (Test-Path -LiteralPath $tokenStoreRoot) {
+                                    Remove-Item -LiteralPath $tokenStoreRoot -Recurse -Force
+                                }
                             }
                         '''
-                    }
                 }
             }
         }
