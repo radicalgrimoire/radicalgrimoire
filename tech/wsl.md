@@ -1,5 +1,9 @@
 # WSL2 + Ubuntu + Docker Engine 構築メモ
 
+WSL 同梱の `wslc.exe` でコンテナを実行する場合は、
+[WSL container (wslc) の導入と基本操作](wsl-container.md) を参照する。
+この資料は Ubuntu 内に Docker Engine を導入する別構成の手順。
+
 ## 目的
 
 WSL2 上の Ubuntu に Docker Engine を導入し、Windows から Docker コマンドを使えるようにするための手順メモ
