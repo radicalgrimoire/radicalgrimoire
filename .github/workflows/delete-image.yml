@@ -6,6 +6,10 @@ on:
       version:
         required: true
         type: string
+      cleanup_untagged:
+        required: false
+        type: boolean
+        default: false
       source_ref:
         required: false
         type: string
@@ -34,6 +38,7 @@ jobs:
           echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Delete existing image version
+        if: ${{ !inputs.cleanup_untagged }}
         uses: actions/github-script@v8
         env:
           IMAGE_NAME: ${{ steps.build.outputs.image_name }}
@@ -76,3 +81,127 @@ jobs:
               core.info(`Deleting ${packageName} version ${version.id} (tags: ${version.metadata.container.tags.join(', ')}).`);
               await deleteVersion({ ...parameters, package_version_id: version.id });
             }
+
+      - name: Delete untagged images
+        if: ${{ inputs.cleanup_untagged }}
+        uses: actions/github-script@v8
+        env:
+          IMAGE_NAME: ${{ steps.build.outputs.image_name }}
+          REGISTRY_TOKEN: ${{ github.token }}
+        with:
+          script: |
+            const { data: repository } = await github.rest.repos.get(context.repo);
+            const isOrganization = repository.owner.type === 'Organization';
+            const packageName = `${context.repo.repo}/${process.env.IMAGE_NAME}`.toLowerCase();
+            const registryName = `${context.repo.owner}/${packageName}`.toLowerCase();
+            const parameters = {
+              package_type: 'container',
+              package_name: packageName,
+              ...(isOrganization ? { org: context.repo.owner } : { username: context.repo.owner }),
+            };
+            const listVersions = isOrganization
+              ? github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg
+              : github.rest.packages.getAllPackageVersionsForPackageOwnedByUser;
+            const deleteVersion = isOrganization
+              ? github.rest.packages.deletePackageVersionForOrg
+              : github.rest.packages.deletePackageVersionForUser;
+            const versions = await github.paginate(listVersions, {
+              ...parameters,
+              state: 'active',
+              per_page: 100,
+            });
+            for (const version of versions) {
+              if (!Array.isArray(version.metadata?.container?.tags) ||
+                  !/^sha256:[a-f0-9]{64}$/.test(version.name)) {
+                throw new Error(`Invalid container metadata for package version ${version.id}.`);
+              }
+            }
+            if (!versions.some(version => version.metadata.container.tags.length === 0)) {
+              core.info(`No untagged images found in ${packageName}.`);
+              return;
+            }
+
+            const tokenUrl = new URL('https://ghcr.io/token');
+            tokenUrl.searchParams.set('service', 'ghcr.io');
+            tokenUrl.searchParams.set('scope', `repository:${registryName}:pull`);
+            async function getRegistryToken() {
+              const credentials = Buffer.from(`token:${process.env.REGISTRY_TOKEN}`).toString('base64');
+              const response = await fetch(tokenUrl, {
+                headers: { Authorization: `Basic ${credentials}` },
+              });
+              if (!response.ok) throw new Error(`GHCR token request failed: HTTP ${response.status}.`);
+              const data = await response.json();
+              if (typeof data.token !== 'string' || !data.token) {
+                throw new Error('GHCR token response did not contain a token.');
+              }
+              return data.token;
+            }
+
+            let registryToken = await getRegistryToken();
+            const references = new Map();
+            for (const version of versions) {
+              const url = `https://ghcr.io/v2/${registryName}/manifests/${version.name}`;
+              const headers = {
+                Accept: [
+                  'application/vnd.oci.image.index.v1+json',
+                  'application/vnd.oci.image.manifest.v1+json',
+                  'application/vnd.docker.distribution.manifest.list.v2+json',
+                  'application/vnd.docker.distribution.manifest.v2+json',
+                ].join(', '),
+                Authorization: `Bearer ${registryToken}`,
+              };
+              let response = await fetch(url, { headers });
+              if (response.status === 401) {
+                registryToken = await getRegistryToken();
+                headers.Authorization = `Bearer ${registryToken}`;
+                response = await fetch(url, { headers });
+              }
+              if (!response.ok) {
+                throw new Error(`Cannot inspect manifest ${version.name}: HTTP ${response.status}.`);
+              }
+              const manifest = await response.json();
+              if (manifest.manifests !== undefined && !Array.isArray(manifest.manifests)) {
+                throw new Error(`Invalid manifest list for ${version.name}.`);
+              }
+              const targets = new Set();
+              for (const entry of manifest.manifests || []) {
+                if (typeof entry.digest !== 'string') {
+                  throw new Error(`Invalid manifest reference in ${version.name}.`);
+                }
+                targets.add(entry.digest);
+              }
+              if (manifest.subject !== undefined) {
+                if (typeof manifest.subject?.digest !== 'string') {
+                  throw new Error(`Invalid manifest subject in ${version.name}.`);
+                }
+                targets.add(manifest.subject.digest);
+              }
+              for (const tag of version.metadata.container.tags) {
+                const match = /^sha256-([a-f0-9]{64})\./.exec(tag);
+                if (match) targets.add(`sha256:${match[1]}`);
+              }
+              references.set(version.name, targets);
+            }
+
+            const remaining = new Map(versions.map(version => [version.name, version]));
+            let deleted = 0;
+            while (true) {
+              const referenced = new Set();
+              for (const digest of remaining.keys()) {
+                for (const target of references.get(digest)) referenced.add(target);
+              }
+              const candidates = [...remaining.values()].filter(version =>
+                version.metadata.container.tags.length === 0 && !referenced.has(version.name)
+              );
+              if (candidates.length === 0) break;
+              for (const version of candidates) {
+                core.info(`Deleting untagged ${packageName} version ${version.id} (${version.name}).`);
+                await deleteVersion({ ...parameters, package_version_id: version.id });
+                remaining.delete(version.name);
+                deleted++;
+              }
+            }
+            const retained = [...remaining.values()].filter(version =>
+              version.metadata.container.tags.length === 0
+            ).length;
+            core.info(`Deleted ${deleted} untagged image(s); retained ${retained} referenced untagged image(s).`);
