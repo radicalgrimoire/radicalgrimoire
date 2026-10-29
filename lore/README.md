@@ -1,47 +1,36 @@
-# Lore 社内検証・導入成果
+# Lore ドキュメント
 
-このフォルダは、[Lore](https://github.com/EpicGames/lore) を社内で検証・利用するために行った実装、運用検証、設計判断をまとめる入口です。
+Lore の社内検証・導入における成果、構築・運用手順、作業記録の入口。
+Microsoft Entra ID での login から repository ごとの権限管理、CLI 利用までを対象とする。
 
-Lore は Epic Games による、巨大なバイナリアセットを含むプロジェクトにも対応する次世代のオープンソースバージョン管理システムです。本取り組みでは、Lore 本体を動かすだけでなく、社内の ID 基盤でログインし、repository ごとの権限を管理し、実際に CLI から利用できる状態までを対象にしました
+## 検証・導入の成果
 
-## 成果の要約
+### 認証・認可
 
-### Microsoft Entra ID と Lore の認証・認可を接続
+Lore の UCS Auth / ReBAC protocol を実装する `lore-auth-bridge` を整備し、
+Entra ID と Lore を接続した。Entra ID の email claim が未検証で返る環境では、
+email を本人確認に使わず、管理者が `<tenant-id>:<object-id>` を user に事前に bind する。
+identity binding と audit log は transaction で同時確定し、同じ identity を別 user に
+紐付ける操作は拒否する。冪等な onboarding script も用意した。
 
-Lore の CLI と server には認証を利用する仕組みがありますが、社内 IdP と接続して token を発行し、ユーザー・グループ・repository ごとの権限を管理するサービスは別途必要です。
+repository ごとに `reader` / `writer` / `admin` の権限を管理でき、
+サービスアカウント認証にも対応している。操作手順は
+[lore-authctl の操作](operations/authctl.md) と
+[CI Service Account の設定](operations/ci-service-account.md) を参照する。
 
-そこで、Lore の UCS Auth / ReBAC protocol を実装する `lore-auth-bridge` を整備しました。
+### TLS gRPC
 
-```text
-Browser
-  -> Microsoft Entra ID でログイン
-  -> lore-auth-bridge が authn token を発行
-  -> Lore CLI が repository 単位の authz token へ交換
-  -> loreserver が JWT と ReBAC 権限を検証
-  -> clone / push / repository 操作
-```
+Lore CLI の UCS Auth gRPC client に、OS の信頼済みルート証明書ストアを利用する TLS 設定を
+追加した。証明書検証を無効化せず、端末の信頼ストアに配布した社内 CA が署名する bridge
+証明書を検証する。これにより、Entra login 後の repository-scoped token exchange を
+TLS 保護した gRPC で完結できる。
 
-Entra ID の email claim が未検証で返る実環境の課題には、email を本人確認に使わず、`<tenant-id>:<object-id>` で表される安定した identity を管理者が事前に bind する方式で対応しました。
+証明書の信頼設定は環境や client revision に依存する。実機での自己署名証明書の運用例は
+[証明書運用記録](work/server-193-bridge-tls.md) を参照する。
 
-- `lore-authctl user bind-identity` による管理操作
-- identity binding と audit log の transaction による同時確定
-- 同一 identity の別ユーザーへの紐付け拒否
-- 冪等な onboarding script
-- repository ごとの `reader` / `writer` / `admin` 権限
+### end-to-end 検証
 
-詳細は [auth-bridge](docs/auth-bridge/README.md) を参照してください。
-
-### 社内 CA を利用する TLS gRPC 接続を実現
-
-Lore CLI から認証 bridge へ接続する UCS Auth gRPC client に、OS の信頼済みルート証明書ストアを利用する TLS 設定を追加しました。
-
-これは証明書検証を無効化する変更ではありません。社内 CA をクライアント端末の信頼ストアへ配布し、その CA が署名した bridge 証明書を通常どおり検証できるようにするものです。
-
-この変更により、Entra login 後の repository-scoped token exchange を TLS 保護した gRPC で完結できます。
-
-### 実機での end-to-end 検証
-
-以下の経路を実機で確認しました。
+以下の経路を実機で確認した。
 
 1. Microsoft Entra ID で browser login
 2. bridge による identity 解決と JWT 発行
@@ -52,20 +41,20 @@ Lore CLI から認証 bridge へ接続する UCS Auth gRPC client に、OS の�
 7. identity binding と onboarding script の冪等な再実行
 8. SQLite への audit record 保存
 
-bridge 側では、次の自動検証も成功しています。
+bridge 側では、次の自動検証も成功した。
 
 ```bash
 cargo check -p lore-authctl
 cargo test -p lore-auth-adapters --test sqlite
 ```
 
-SQLite integration test は 24 件成功しています。
+SQLite integration test は 24 件成功した。
 
-### 社内テスト運用の導線
+### 社内テスト運用
 
-Lore server を社内で継続的に試すため、データ保存先、設定、実行ユーザー、systemd service を固定する host-native の永続運用スクリプトを用意しました。
-
-Docker / Compose の試用導線もありますが、これはローカル実験向けの補助選択肢です。状態を持つ VCS server の社内テスト運用を Docker に統一するかは、まだ決めていません。
+データ保存先、設定、実行ユーザー、systemd service を固定する host-native の永続運用
+スクリプトを用意した。Docker / Compose の試用導線もあるが、ローカル実験向けの補助選択肢
+であり、状態を持つ VCS server の社内テスト運用を Docker に統一するかは未決定である。
 
 ## 時系列
 
@@ -78,19 +67,7 @@ Docker / Compose の試用導線もありますが、これはローカル実験
 | 2026-09 | upstream tag の取り込みと社内更新手順を整備 | フォークを継続更新する運用を文書化 |
 | 2026-10 | bridge を hardening し、サービスアカウント認証を追加 | 人間の利用者と自動処理の両方を認証対象に拡張 |
 
-## 現在地と次の課題
-
-### できていること
-
-- Entra ID を使った Lore CLI login
-- TLS で保護された token exchange
-- ReBAC による repository 単位の認可
-- audit を伴う identity onboarding
-- 実機での repository 作成・操作
-- host-native の永続運用導線
-- サービスアカウント認証
-
-### 今後の課題
+## 今後の課題
 
 - identity binding の専用自動テストを追加する
   - subject conflict
@@ -100,10 +77,34 @@ Docker / Compose の試用導線もありますが、これはローカル実験
 - テスト利用チームを通じて onboarding と権限管理の UX を検証する
 - Docker を補助導線として維持するか、host-native 運用に寄せるかを実運用の知見で判断する
 
-## ドキュメント案内
+## 構築
 
-- [認証 bridge の概要](docs/auth-bridge/README.md)
-- [Entra ID 対応の変更履歴と根拠](docs/auth-bridge/setup/entra-id-bridge-update-history.md)
-- [Entra ID 連携の変更根拠と検証記録](docs/auth-bridge/setup/entra-id-integration-evidence.md)
-- [手順・検証メモ](guides/)
-- [作業記録](work/)
+同一 host に bridge と Lore Server を構築し、Windows client を接続する場合は、
+次の順に進める。
+
+1. [lore-auth-bridge 構築手順](setup/auth-bridge-setup.md) — bridge、Entra ID、TLS、nginx の構築。
+2. [Lore Server 構築手順](setup/server-setup.md) — Lore Server の構築と client からの接続確認。
+3. [Windows CLI インストール手順](setup/windows-cli-setup.md) — client の配置、証明書、初回接続。
+
+## 管理・運用
+
+- [TLS の確認と切り分け](operations/tls-troubleshooting.md) — certificate、trust、接続と更新。
+- [lore-authctl の操作](operations/authctl.md) — user、group、repository 権限。
+- [管理 Web UI の設定と操作](operations/admin-ui.md) — 公開範囲の制限と管理操作。
+- [バックアップと復旧](operations/backup-recovery.md) — offline backup と復元試験。
+- [CI Service Account の設定](operations/ci-service-account.md) — runner の認証と権限。
+- [Lore Server / bridge の更新](operations/upgrade.md) — 更新、受入、rollback。
+
+## 利用者向け
+
+- [CLI の基本操作](guides/cli-usage.md) — login、clone、commit、push。
+
+## 資料の扱い
+
+上記の構築・管理・運用・利用者向け資料は
+[実機導入記録](work/server-215.md) や旧資料を基に一般化した手順であり、
+一般化後の手順自体は実機での通し検証を行っていない。`<...>` を実環境の値に置き換え、
+使用する binary の version と設定 schema を確認する。
+
+実機の導入・更新・運用記録は [作業記録](work/) に残している。実機記録と
+対象環境の動作を優先する。

@@ -54,5 +54,3 @@ Unity を利用するチームで、Git よりアセット管理を意識した 
 - [LORE documentation](https://epicgames.github.io/lore/)
 - [Git documentation](https://git-scm.com/doc)
 - [Unity Version Control documentation](https://docs.unity.com/ugs/en-us/manual/devops/manual/unity-version-control)
-
-より詳しい LORE と Perforce の差分は、[LoreとPerforceの比較](../lore/docs/explanation/lore-and-perforce.md)を参照する。

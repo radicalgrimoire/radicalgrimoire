@@ -1,51 +1,51 @@
 # radicalgrimoire
 
-I’m souhei-ueno. A degenerate piece of shit with zero control over his libido, making questionable life choices and somehow still pursuing engineering. That’s who I am.
+I’m a fucking disposable engineer.
+Maintaining my burnt-out ass with sex & Agile wanks. Bad for your kid's health. Look at my posts: "What the fuck?"
 
-## Docker Helixcore  
-p4 — apparently, “before” was just too much work to type.
+Human memory is unreliable. Knowledge decays. Wisdom leaks away. Entire careers are built on repeatedly rediscovering things we once knew.
 
-### Reusable Docker workflows
+Curiously, ideas linked to sexual desire seem far more resistant to this process.
 
-The following definitions are called by
-[docker-helix-p4](https://github.com/radicalgrimoire/docker-helix-p4) at `@main`:
+Rather than fight human nature, this repository embraces it.
 
-- [build.yml](.github/workflows/build.yml): Build, test, and upload an image artifact.
-- [get-version.yml](.github/workflows/get-version.yml): Extract image version outputs.
-- [delete-image.yml](.github/workflows/delete-image.yml): Delete existing GHCR image versions with the exact version tag.
-- [publish.yml](.github/workflows/publish.yml): Publish the image to GHCR.
-- [scan.yml](.github/workflows/scan.yml): Scan the image artifact with Trivy.
+Consider this a memory-retention experiment disguised as a GitHub account.
 
-These are `workflow_call` definitions, not standalone entry points. They expect
-the caller's `build/<build_path>` configuration and scripts; the scan also uses
-the caller's `scripts/summarize_trivy.py`. Checkout intentionally targets the
-calling repository at `source_ref`, not this repository. Runs, artifacts,
-`GITHUB_TOKEN` permissions, secrets, variables, and the GHCR image namespace
-remain associated with the caller.
+## giants-calender
 
-Publishing uses the version tag without a workflow run number, plus `latest`
-and, for scheduled runs, `nightly`. The caller runs `get-version.yml`, then
-`delete-image.yml`, then `publish.yml`. Deletion is separate from publishing and
-only runs once the version is available and the required scan succeeds (or is
-skipped for services without a scan). It removes any existing GHCR image version
-carrying the exact version tag. This removes
-all tags attached to that image version, not just the version tag; tags are
-recreated by the subsequent pushes and can remain absent if publishing fails.
-The caller's `GITHUB_TOKEN` needs package admin access to delete versions
-(automatically granted for packages created by that repository's workflow),
-in addition to `packages: write`. Public versions with more than 5,000 downloads
-cannot be deleted through the API; deletion errors stop publication. The caller
-serializes builds for the same repository and build path across deletion and
-publication; other callers should provide equivalent concurrency control.
+There appears to be a regional religion in Nishinomiya, Hyogo Prefecture, known as the Hanshin Tigers.
+This repository gathers and distributes the annual ritual calendar of its rival faith, the Yomiuri Giants of Tokyo.
+Freedom of religion is constitutionally protected in Japan.
+I have therefore chosen to place my faith in the Yomiuri Giants.
 
-Deploy these files to this repository's `main` branch before switching the
-`docker-helix-p4` callers and removing their local copies.
+## docker-helix-p4
 
-## radicalgrimoire.github.io  
-bad ideas deserve documentation.
+Version control is supposed to protect history.
+Naturally, this requires a server, a proxy, a code-review system, authentication services, container images, scheduled builds, image scans, and a carefully synchronized arrangement of GitHub Actions.
 
-## GitHub UI Toolkit  
-GitHub Alerts don't work. When do we make them work? Now.
+This repository packages Helix Core and its surrounding machinery into containers, so that the infrastructure required to preserve a file's past can itself be rebuilt from files.
 
-## Cal Toolkit  
-Faith changes form, and in time becomes universal.
+There is a certain dignity in this recursion.
+We construct an increasingly elaborate fortress to ensure that no one accidentally overwrites `final_final_really_final.psd`.
+
+The fortress may be more complicated than the file.
+The file may still be wrong.
+But at least the failure is reproducible.
+
+## lore-auth-bridge
+
+Helix Core has become the standard version-control system for high-end game development.
+It is also expensive to license, expensive to host, and very effective at turning every technical decision into a budget discussion.
+
+Lore is Epic Games' open-source successor to that tradition.
+It still needs authentication, authorization, user directories, and a way to decide who may touch which repository.
+Apparently, freedom from licensing costs does not include freedom from administration.
+
+This bridge connects Lore to the identity provider a team already uses, then issues the tokens and evaluates the permissions that a shared server requires.
+Google, Entra ID, Keycloak, and a small Rust service stand between a developer and the ancient privilege of pushing a file.
+
+I have no objection to enterprise software.
+I object only to being held hostage by it.
+
+This is my resolve.
+
