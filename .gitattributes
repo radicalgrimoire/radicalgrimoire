@@ -1,8 +1,4 @@
-# Files deployed to Linux must retain LF line endings on every platform.
-/scripts/lore-git-backup/*.sh text eol=lf
-/scripts/lore-git-backup/*.service text eol=lf
-/scripts/lore-git-backup/*.timer text eol=lf
-/scripts/lore-git-backup/*.md text eol=lf
-/scripts/lore-git-backup/config.env.example text eol=lf
+# Scripts and files deployed to Linux must retain LF line endings on every platform.
+/scripts/** text eol=lf
 /tech/LORE.md text eol=lf
 /tech/lore-*.md text eol=lf
