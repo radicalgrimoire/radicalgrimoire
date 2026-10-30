@@ -14,16 +14,16 @@
 bridge host の管理者 shell で実行する。
 
 ```bash
-AUTHCTL=/opt/lore/bin/lore-authctl
-CONFIG=/opt/lore/config/lore-auth.yaml
-
 sudo systemctl is-active lore-auth
-sudo -u lore "$AUTHCTL" --config "$CONFIG" --help
-sudo -u lore "$AUTHCTL" user --help
-sudo -u lore "$AUTHCTL" group --help
-sudo -u lore "$AUTHCTL" grant --help
-sudo -u lore "$AUTHCTL" --config "$CONFIG" user list
-sudo -u lore "$AUTHCTL" --config "$CONFIG" repo list
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml --help
+sudo -u lore /opt/lore/bin/lore-authctl user --help
+sudo -u lore /opt/lore/bin/lore-authctl group --help
+sudo -u lore /opt/lore/bin/lore-authctl grant --help
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml user list
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml repo list
 ```
 
 想定した service、user、repository が確認できない場合は、変更を止めて対象 host と config を
@@ -36,11 +36,14 @@ Entra 管理画面で tenant ID、user の object ID、email、display name を�
 既存 user が `user list` にある場合は `user add` を省略する。
 
 ```bash
-sudo -u lore "$AUTHCTL" --config "$CONFIG" user add \
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml user add \
   --email "<USER_EMAIL>" --name "<DISPLAY_NAME>"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" user bind-identity \
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml user bind-identity \
   --idp entra --email "<USER_EMAIL>" --subject "<TENANT_ID>:<OBJECT_ID>"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" user list
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml user list
 ```
 
 subject が別 user に bind 済みなら上書きせず、対象の object ID と既存 binding を調査する。
@@ -52,10 +55,13 @@ subject が別 user に bind 済みなら上書きせず、対象の object ID �
 repository が登録済みであることを確認し、必要な最小 role を付与する。
 
 ```bash
-sudo -u lore "$AUTHCTL" --config "$CONFIG" grant list "<REPOSITORY>"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" grant add \
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml grant list "<REPOSITORY>"
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml grant add \
   "user:<USER_EMAIL>" "<REPOSITORY>" writer
-sudo -u lore "$AUTHCTL" --config "$CONFIG" check \
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml check \
   "<USER_EMAIL>" "<REPOSITORY>" write
 ```
 
@@ -67,16 +73,24 @@ clone、必要に応じた承認済み場所への write の確認とは別で�
 
 以下は Service Account を group に所属させ、runner の source CIDR と repository 権限を設定
 する例である。`<USER_ID>` は bridge user ID、`<RUNNER_CIDR>` は **実測した**送信元 CIDR。
+新規 Service Account は作成時に group を指定するため、その場合は group の作成と membership
+追加を重複して実行しない。
 
 ```bash
-sudo -u lore "$AUTHCTL" --config "$CONFIG" group add "<GROUP>" \
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml group add "<GROUP>" \
   --description "CI runners"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" group member add "<GROUP>" "<USER_ID>"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" group network-cidr add "<GROUP>" "<RUNNER_CIDR>"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" group network-cidr list "<GROUP>"
-sudo -u lore "$AUTHCTL" --config "$CONFIG" grant add \
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml group member add "<GROUP>" "<USER_ID>"
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml group network-cidr add "<GROUP>" "<RUNNER_CIDR>"
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml group network-cidr list "<GROUP>"
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml grant add \
   "group:<GROUP>" "<REPOSITORY>" writer
-sudo -u lore "$AUTHCTL" --config "$CONFIG" check "<USER_ID>" "<REPOSITORY>" write
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml check "<USER_ID>" "<REPOSITORY>" write
 ```
 
 既存 group を使う場合は作成を省略し、既存 membership、CIDR、grant を確認する。Service Account の

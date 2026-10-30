@@ -23,18 +23,24 @@ bridge host の管理者 shell で実行する。`add` は user ID、client ID�
 次の例は出力をログに表示しないための一時 file を作る。安全な管理端末と非共有 shell を使い、
 file の取り扱いは組織の secret 管理手順に従う。
 
+先に所属先の group を用意する。既存 group を使う場合は作成を省略する。
+
 ```bash
+sudo -u lore /opt/lore/bin/lore-authctl --config /opt/lore/config/lore-auth.yaml \
+  group add "<GROUP>" --description "CI runners"
 umask 077
 BOOTSTRAP="$(mktemp "${TMPDIR:-/tmp}/lore-bootstrap.XXXXXXXX")"
 sudo -u lore /opt/lore/bin/lore-authctl --config /opt/lore/config/lore-auth.yaml \
-  service-account add --client-id "<CLIENT_ID>" --name "<DISPLAY_NAME>" > "$BOOTSTRAP"
+  service-account add --client-id "<CLIENT_ID>" --name "<DISPLAY_NAME>" \
+  --group "<GROUP>" > "$BOOTSTRAP"
 ```
 
 command が成功したことを確認し、安全な方法で三列目の secret を CI credential store に登録する。
-user ID は group 登録に使う。secret や file の内容をログに表示しない。登録と login 確認後、
+user ID は権限の確認に使う。account 作成と group 所属は一括確定される。secret や file の内容をログに表示しない。登録と login 確認後、
 組織の手順で一時 file を削除する。失敗時も secret の露出を避けて原因を調査する。
 
-続けて [authctl の group / CIDR / grant 手順](authctl.md#4-group-と-runner-の-cidr) を実行する。
+続けて [authctl の group / CIDR / grant 手順](authctl.md#4-group-と-runner-の-cidr) の
+CIDR と grant を設定する。group と membership の追加は不要。
 grant 判定が `allow` であることと、実際の runner から login できることは別々に確認する。
 既存 runner の CIDR を消さず、新 runner に必要な CIDR を追加する。
 
