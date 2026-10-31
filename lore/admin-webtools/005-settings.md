@@ -17,6 +17,17 @@ Client ID、表示名、既存 group を指定して Service Account を作成�
 監査は一括確定する。Client Secret は作成結果に一度だけ表示されるため、安全な credential
 store に保存する。紛失時は対象 revision の `service-account rotate` で再発行する。
 
+### Client ID とは
+
+Client ID は、CI runner などが bridge にログインするときに Service Account を識別する ID。
+管理者が用途に合わせて決める値であり、Entra application の Client ID や、作成時に発行される
+user ID とは別である。たとえば release 用 runner なら `ci-release` のように入力する。
+
+- 同じ bridge 内の他の Service Account と重複しない ID にする。
+- 1〜128 文字の半角英数字、`.`、`_`、`-` を使用する。スペースや `:` は使えない。
+- 作成後、CI の `LORE_CLIENT_ID` に同じ値を設定する。ログイン時には別途発行される
+  Client Secret と組み合わせる。ID 自体は secret ではないが、secret は安全に管理する。
+
 フォームは repository grant と CIDR を設定しない。別途設定し、
 [runner からの login と clone](../operations/003-ci-service-account.md) を確認する。token や
 secret をログや問い合わせに添付しない。

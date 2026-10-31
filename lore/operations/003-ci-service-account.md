@@ -20,6 +20,8 @@
 ## 2. Service Account と権限
 
 bridge host の管理者 shell で実行する。`add` は user ID、client ID、secret を一度だけ出力する。
+[Client ID の意味と指定できる文字](../admin-webtools/005-settings.md#client-id-とは)を確認し、
+Entra application の Client ID とは区別する。
 次の例は出力をログに表示しないための一時 file を作る。安全な管理端末と非共有 shell を使い、
 file の取り扱いは組織の secret 管理手順に従う。
 
