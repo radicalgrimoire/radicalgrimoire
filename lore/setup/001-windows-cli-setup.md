@@ -14,7 +14,7 @@ Windows x64 の利用者向けに `lore.exe` を配置し、Lore Server への�
 - Lore remote URL（例: `lore://<SERVER_HOST>:41337`）と接続先の certificate または信頼する CA。
   証明書の fingerprint を別の信頼できる経路で確認する。**private key は受け取らない。**
 - Entra user の identity binding と、対象 repository のアクセス権。未登録なら
-  管理者が [bridge の利用者登録](001-auth-bridge-setup.md#10-利用者登録と-repository-へのアクセス) を行う。
+  管理者が [bridge の利用者登録](lore-auth-bridge/010-user-onboarding.md) を行う。
 
 公式 release を使う場合は [Epic Games の Lore releases](https://github.com/EpicGames/lore/releases)
 から、管理者が指定した version の Windows x64 archive を選ぶ。旧手順では

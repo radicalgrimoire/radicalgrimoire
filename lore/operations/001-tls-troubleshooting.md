@@ -1,7 +1,7 @@
 # TLS 証明書の確認とトラブルシューティング
 
 旧 TLS 資料と [実機の証明書運用記録](../work/server-193-bridge-tls.md) を
-基に整理した。コマンド例は [bridge 構築手順](../setup/001-auth-bridge-setup.md) の同一 host 構成を前提とする。
+基に整理した。コマンド例は [bridge 構築手順](../setup/lore-auth-bridge/README.md) の同一 host 構成を前提とする。
 使用する binary の revision と certificate の配布方式により挙動は異なるため、実環境で確認する。
 
 ## 1. 接続先と証明書を確認する
@@ -50,7 +50,7 @@ sudo journalctl -u lore-auth -u loreserver -n 100 --no-pager
 ## 3. Windows client / runner から確認する
 
 管理者が安全な経路で配布した certificate の SHA-256 fingerprint を照合し、必要な trust
-store に追加する手順は [Windows CLI インストール手順](../setup/003-windows-cli-setup.md#4-certificate-を信頼しログインする)
+store に追加する手順は [Windows CLI インストール手順](../setup/001-windows-cli-setup.md#4-certificate-を信頼しログインする)
 を参照する。Windows service account で実行する runner では、必要に応じて Local Machine store
 を管理者が更新する。
 

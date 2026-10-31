@@ -7,7 +7,7 @@ Windows から、登録済み repository を取得し変更を送るまでの手
 
 ## 1. login と一覧
 
-[Windows CLI のインストール](../setup/003-windows-cli-setup.md) と certificate trust が完了し、管理者が
+[Windows CLI のインストール](../setup/001-windows-cli-setup.md) と certificate trust が完了し、管理者が
 identity と repository grant を登録した状態で PowerShell を開く。`<...>` を実環境の値に替える。
 
 ```powershell

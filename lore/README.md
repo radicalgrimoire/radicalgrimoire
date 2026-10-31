@@ -84,21 +84,24 @@ revision で同じ件数や coverage を確認したことを意味しない。
 
 ## 構築
 
+[セットアップ資料の一覧](setup/README.md)も参照する。
+
 同一 host に bridge と Lore Server を構築し、Windows client を接続する場合は、
 次の順に進める。
 
-1. [lore-auth-bridge 構築手順](setup/001-auth-bridge-setup.md) — bridge、Entra ID、TLS、nginx の構築。
-2. [Lore Server 構築手順](setup/002-server-setup.md) — Lore Server の構築と client からの接続確認。
-3. [Windows CLI インストール手順](setup/003-windows-cli-setup.md) — client の配置、証明書、初回接続。
+1. [lore-auth-bridge 構築手順](setup/lore-auth-bridge/README.md) — bridge、Entra ID、TLS、nginx の構築。
+2. [Lore Server 構築手順](setup/lore-server/README.md) — Lore Server の構築と client からの接続確認。
+3. [Windows CLI インストール手順](setup/001-windows-cli-setup.md) — client の配置、証明書、初回接続。
 
 その他の構成:
 
-- [Identity Provider と招待](setup/004-identity-providers.md) — Google、Entra ID、Keycloak と binding。
-- [Tailscale 構成](setup/005-tailscale.md) — private mesh での endpoint と trust。
-- [IdP を使わないローカル検証](setup/006-local-auth-quickstart.md) — 手動 token を使う検証の流れ。
+- [Identity Provider と招待](setup/lore-auth-bridge/012-identity-providers.md) — Google、Entra ID、Keycloak と binding。
+- [Tailscale 構成](setup/002-tailscale.md) — private mesh での endpoint と trust。
+- [IdP を使わないローカル検証](setup/003-local-auth-quickstart.md) — 手動 token を使う検証の流れ。
 
 ## 管理・運用
 
+- [運用ガイドの一覧](operations/README.md)
 - [TLS の確認と切り分け](operations/001-tls-troubleshooting.md) — certificate、trust、接続と更新。
 - [管理 Web UI の設定と操作](admin-webtools/README.md) — 公開範囲の制限と管理操作。
 - [バックアップと復旧](operations/002-backup-recovery.md) — offline backup と復元試験。
@@ -109,6 +112,7 @@ revision で同じ件数や coverage を確認したことを意味しない。
 
 ## 利用者向け
 
+- [利用・管理ガイドの一覧](guides/README.md)
 - [CLI の基本操作](guides/001-cli-usage.md) — login、clone、commit、push。
 - [lore-authctl の操作](guides/002-authctl.md) — 管理者向けの user、group、repository 権限。
 

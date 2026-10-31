@@ -10,7 +10,7 @@ MagicDNS の安定した FQDN を使い、bridge の `lore.auth_url` と Lore Se
 `environment.endpoint.auth_url`、JWT issuer / audience、Lore remote と gRPC certificate
 の SAN を整合させる。issuer と audience は bridge と Lore Server で対応させ、
 client が使う DNS 名または IP を certificate の SAN に含める。IP を使う client には IP SAN
-も必要である。[Lore Server 設定](002-server-setup.md#3-lore-server-設定) と
+も必要である。[Lore Server 設定](lore-server/003-server-config.md) と
 [TLS の確認](../operations/001-tls-troubleshooting.md) を参照する。
 
 Lore Server と bridge が同一 host なら JWKS endpoint は loopback を使える。別 host では

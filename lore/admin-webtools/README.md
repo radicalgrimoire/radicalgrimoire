@@ -28,7 +28,7 @@ nginx が loopback から proxy する場合、外部利用者も bridge から�
 
 ## 2. nginx の公開境界を制限する
 
-現在の [bridge 構築例](../setup/001-auth-bridge-setup.md#7-nginx-設定) は HTTP の `location /` を
+現在の [bridge 構築例](../setup/lore-auth-bridge/007-nginx.md) は HTTP の `location /` を
 bridge へ転送するため、そのままでは `/admin` に専用の送信元制限は設定していない。
 UI を有効にする前に、管理者が利用する CIDR を確定し、対象 revision の全管理 endpoint と
 nginx の location 優先順位を確認する。`/admin` 以外に管理 API が存在する場合は、それらも

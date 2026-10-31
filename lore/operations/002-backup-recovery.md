@@ -11,7 +11,7 @@
 
 ## 1. recovery set の範囲
 
-以下は [構築例](../setup/002-server-setup.md) の path。実際の設定から path と service 名を確認する。
+以下は [構築例](../setup/lore-server/README.md) の path。実際の設定から path と service 名を確認する。
 
 | 対象 | 構築例 |
 | --- | --- |

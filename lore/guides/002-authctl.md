@@ -1,7 +1,7 @@
 # lore-authctl による利用者・権限管理
 
 旧 Authctl 資料と [実機の利用者登録記録](../work/server-193-account.md)
-を基にした操作例。例は [bridge 構築手順](../setup/001-auth-bridge-setup.md) の path と実行 user を使う。
+を基にした操作例。例は [bridge 構築手順](../setup/lore-auth-bridge/README.md) の path と実行 user を使う。
 既存環境の path、権限、対象 binary の revision を確認し、`<...>` を置き換える。
 
 > [!IMPORTANT]
@@ -54,7 +54,37 @@ subject が別 user に bind 済みなら上書きせず、対象の object ID �
 `required_tid` と異なる tenant を拒否する。同じ有効 user への同じ binding は冪等だが、
 別 user に紐付く subject や無効 user への binding は拒否される。binding と監査は同一
 transaction で確定する。email、UPN、表示名を永続 subject の代わりにしない。
-確認済み email を使う別の登録経路は [Identity Provider と招待](../setup/004-identity-providers.md)
+確認済み email を使う別の登録経路は [Identity Provider と招待](../setup/lore-auth-bridge/012-identity-providers.md)
+を参照する。
+
+### 確認済み email による招待
+
+bridge `a751711` では、管理 Web UI の招待機能は削除されているが、CLI の `user invite` は
+利用できる。IdP が確認済み email を返し、対象 provider に
+`trust.email_binding: verified_email_invitation` が設定されている場合の登録経路である。
+設定を省略すると対象 revision の既定値は `disabled` で、招待は login 時に消費されない。
+
+provider ID、対象 email、表示名と対象 DB を確認してから実行する。`<PROVIDER_ID>` は設定の
+`identity_providers.providers` の key である。
+
+```bash
+sudo -u lore /opt/lore/bin/lore-authctl user invite --help
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml user invite \
+  --idp "<PROVIDER_ID>" --email "<USER_EMAIL>" --name "<DISPLAY_NAME>"
+sudo -u lore /opt/lore/bin/lore-authctl \
+  --config /opt/lore/config/lore-auth.yaml user list
+```
+
+この操作は user と pending invitation を登録するが、メールを送信せず、repository 権限の
+付与や token の発行もしない。対象 user が IdP で login し、provider、issuer、確認済み email と
+domain policy が一致した場合に identity binding が作成される。
+`user list` の pending 表示だけでは login 完了を意味しない。対象 user の実際の login と、
+必要な grant を設定した後の repository 操作も確認する。
+
+IdP が未検証 email を返す場合、この招待は消費されない。未検証 email を本人確認に使わず、
+Entra では上記の管理者確認済み tenant ID と object ID による binding を使う。
+信頼設定と対象 revision の詳細は [Identity Provider と招待](../setup/lore-auth-bridge/012-identity-providers.md#確認済み-email-による招待)
 を参照する。
 
 ## 3. repository grant を設定・確認する
