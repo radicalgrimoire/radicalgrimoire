@@ -1,6 +1,6 @@
 # 管理 UI: repository
 
-[管理 UI にログイン](login.md)した管理者は Repositories 画面から repository を確認・管理
+[管理 UI にログイン](001-login.md)した管理者は Repositories 画面から repository を確認・管理
 できる。以下は bridge `b332e35` の文書に基づく概要であり、画面や機能は revision によって
 異なる。一般化した操作の通し検証は未実施。変更前に対象と影響を確認する。
 
@@ -23,7 +23,7 @@ bridge の同期、監査は一つの transaction ではない。結果不明や
 
 ## 認可 record の無効化
 
-repository の認可 record の無効化には [メンテナンスモード](maintenance.md) が
+repository の認可 record の無効化には [メンテナンスモード](006-maintenance.md) が
 必要で、grant は保持される。その後の確認操作で直接 grant を一括削除できるが、再有効化しても
 削除した grant は戻らない。
 

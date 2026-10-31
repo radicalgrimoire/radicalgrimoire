@@ -103,7 +103,7 @@ install -d -m 0755 "$HOME/src"
 bridge には server、管理 CLI のほか、Lore binary の JWT claim contract を確認する
 `lore-claimprobe` がある。旧 bridge 文書は Lore CLI / Server `0.8.4+283` の通し検証を
 報告しているが、すべての revision の互換性を保証しない。
-[開発・互換性検証](../operations/bridge-validation.md) も参照する。
+[開発・互換性検証](../operations/006-bridge-validation.md) も参照する。
 
 ```bash
 source "$HOME/.cargo/env"
@@ -407,7 +407,7 @@ sudo journalctl -u lore-auth -n 100 --no-pager
 
 両 service が `enabled` / `active`、health が `ok`、JWKS が応答し、public と loopback の
 listener が想定どおりであることを確認する。HTTP health の成功だけでは gRPC の動作や
-client の trust は確認できない。続けて [Lore Server](server-setup.md) を構築する。
+client の trust は確認できない。続けて [Lore Server](002-server-setup.md) を構築する。
 
 ## 10. 利用者登録と repository へのアクセス
 
@@ -424,7 +424,7 @@ sudo -u lore /opt/lore/bin/lore-authctl --config /opt/lore/config/lore-auth.yaml
 ```
 
 subject が別 user に bind 済みなら上書きせず、Entra 側と既存 binding を確認する。
-[Lore Server](server-setup.md) の構築後に対象 repository が作成・登録済みであることを確認し、必要な最小 role を付与する。
+[Lore Server](002-server-setup.md) の構築後に対象 repository が作成・登録済みであることを確認し、必要な最小 role を付与する。
 以下は `writer` の例である。
 
 ```bash

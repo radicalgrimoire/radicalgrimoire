@@ -6,12 +6,12 @@ bridge revision に依存する。この手順と例の access 制限は一般�
 
 ## ドキュメント
 
-- [管理 UI へのログイン](login.md) — 管理者の準備とログイン。
-- [repository](repositories.md) — 一覧、作成、権限、無効化。
-- [user](users.md) — 登録、Entra identity、直接権限。
-- [group](groups.md) — member と許可接続元。
-- [管理ツール設定](settings.md) — Service Account、権限判定。
-- [メンテナンスモード](maintenance.md) — 新規 token 発行の停止と注意事項。
+- [管理 UI へのログイン](001-login.md) — 管理者の準備とログイン。
+- [repository](002-repositories.md) — 一覧、作成、権限、無効化。
+- [user](003-users.md) — 登録、Entra identity、直接権限。
+- [group](004-groups.md) — member と許可接続元。
+- [管理ツール設定](005-settings.md) — Service Account、権限判定。
+- [メンテナンスモード](006-maintenance.md) — 新規 token 発行の停止と注意事項。
 
 ## 1. 利用前の確認
 
@@ -28,7 +28,7 @@ nginx が loopback から proxy する場合、外部利用者も bridge から�
 
 ## 2. nginx の公開境界を制限する
 
-現在の [bridge 構築例](../setup/auth-bridge-setup.md#7-nginx-設定) は HTTP の `location /` を
+現在の [bridge 構築例](../setup/001-auth-bridge-setup.md#7-nginx-設定) は HTTP の `location /` を
 bridge へ転送するため、そのままでは `/admin` に専用の送信元制限は設定していない。
 UI を有効にする前に、管理者が利用する CIDR を確定し、対象 revision の全管理 endpoint と
 nginx の location 優先順位を確認する。`/admin` 以外に管理 API が存在する場合は、それらも
@@ -99,4 +99,4 @@ repository の read / write / admin が暗黙に付与され、DB grant は作�
 対象は信頼できる管理者に限定し、設定変更後に server を再起動する。設定を戻しても
 発行済み authz token は期限まで有効である。
 
-設定後は [ログイン手順](login.md) に進む。
+設定後は [ログイン手順](001-login.md) に進む。

@@ -29,12 +29,12 @@ IdP が確認済み email を返す場合、管理者は `user invite --idp <pro
 `allowed_email_domains` は invitation 消費時の追加条件であり、全 login の allowlist では
 ない。既存 binding は provider、issuer、subject で解決される。未検証 email を本人確認に
 使わず、Entra では管理者確認済み subject を明示的に bind できる。
-[Entra user の登録](../guides/authctl.md#2-entra-user-を登録する) と
-[bridge 構築](auth-bridge-setup.md#5-entra-application-と-client-secret) を参照する。
+[Entra user の登録](../guides/002-authctl.md#2-entra-user-を登録する) と
+[bridge 構築](001-auth-bridge-setup.md#5-entra-application-と-client-secret) を参照する。
 
 ## 登録できないとき
 
 IdP login の成功だけでは token は発行されない。provider ID、issuer、callback、tenant と
 既存 binding を確認し、invitation を使う場合は email が IdP 上で verified として返ることを
 確認する。未検証 email を強制的に信頼しない。IdP を使わない検証・障害時の手動発行は
-[token 発行](../operations/token-flows.md)を参照する。
+[token 発行](../operations/005-token-flows.md)を参照する。

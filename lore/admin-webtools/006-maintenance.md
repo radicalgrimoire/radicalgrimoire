@@ -1,6 +1,6 @@
 # 管理 UI: メンテナンスモード
 
-[管理 UI にログイン](login.md)した管理者は Server settings 画面でメンテナンスモードを
+[管理 UI にログイン](001-login.md)した管理者は Server settings 画面でメンテナンスモードを
 設定できる。以下は bridge `b332e35` の文書に基づく概要であり、動作は使用する revision
 によって異なる。一般化した操作の通し検証は未実施。
 
@@ -17,6 +17,6 @@ Lore の期限判定の猶予も管理者が確認する。
 
 repository の認可 record を無効化するにはメンテナンスモードが必要である。ただし、無効化は
 Lore 本体の repository 削除ではない。grant の扱いと UI での制限は
-[repository の操作](repositories.md#認可-record-の無効化) を参照する。
+[repository の操作](002-repositories.md#認可-record-の無効化) を参照する。
 
 設定変更後はメンテナンス状態と監査記録を確認する。

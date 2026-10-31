@@ -18,7 +18,7 @@ bridge `b332e35` の旧 quickstart を基に整理したもので、以下の一
    HTTP JWKS、gRPC auth URL、local store と揃える。配布形態によっては `default.toml` が必要。
 3. 対象 revision の `--help` で command を確認して新しい DB を初期化し、active key を生成する。
    管理 CLI で manual user を作成し、authn token を制限された file に発行する。
-   [token 発行](../operations/token-flows.md#管理-cli-による発行)を参照する。
+   [token 発行](../operations/005-token-flows.md#管理-cli-による発行)を参照する。
 
 ## 接続確認
 

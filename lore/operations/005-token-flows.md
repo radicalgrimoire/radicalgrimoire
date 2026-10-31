@@ -36,4 +36,4 @@ repository token を取得する経路である。`/api/device/start` は reposi
 code と発行 token は credential として扱う。TTL と polling 間隔は対象 revision の
 `security.device_code_ttl_seconds` / `security.device_poll_interval_seconds` を確認する。
 匿名 caller が到達できる start / token endpoint は edge で rate limit し、機密値をログから
-除外する。[bridge 構築](../setup/auth-bridge-setup.md#7-nginx-設定) も参照する。
+除外する。[bridge 構築](../setup/001-auth-bridge-setup.md#7-nginx-設定) も参照する。

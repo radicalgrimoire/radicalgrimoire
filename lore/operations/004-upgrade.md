@@ -11,7 +11,7 @@
 2. 更新前後の binary、checksum、rollback 条件、停止時間、影響範囲を確認する。
 3. 更新後の受入用 user と repository、CI runner を用意する。write 試験は専用 repository または
    承認済み branch で行う。
-4. [バックアップ・復旧](backup-recovery.md) に従い writer を停止して同一時点の recovery set を
+4. [バックアップ・復旧](002-backup-recovery.md) に従い writer を停止して同一時点の recovery set を
    作る。**以下の切替は、backup 完了後も `loreserver` と `lore-auth` が停止している状態で行う。**
 
 更新後に新しい data が書かれた場合、旧 backup への復元ではその後の変更が失われる。
@@ -99,5 +99,5 @@ client で再 login する。
 
 service と writer を停止し、migration の互換性と更新後データの扱いを判断する。
 旧版と新 data の互換性が明確に確認できない場合、binary のみ差し戻さず、
-[同時点の recovery set](backup-recovery.md#3-復元と復元試験) から承認済み手順で復元する。
+[同時点の recovery set](002-backup-recovery.md#3-復元と復元試験) から承認済み手順で復元する。
 復元後は bridge、Lore、client の順に受入確認し、結果と失われた変更を記録する。

@@ -16,8 +16,8 @@ identity binding と audit log は transaction で同時確定し、同じ ident
 
 repository ごとに `reader` / `writer` / `admin` の権限を管理でき、
 サービスアカウント認証にも対応している。操作手順は
-[lore-authctl の操作](guides/authctl.md) と
-[CI Service Account の設定](operations/ci-service-account.md) を参照する。
+[lore-authctl の操作](guides/002-authctl.md) と
+[CI Service Account の設定](operations/003-ci-service-account.md) を参照する。
 
 bridge は登録済み identity に authn token を発行し、Lore CLI は repository 操作時に
 `UrcAuthApi` で短命の repository scoped authz token を取得する。Lore Server は JWKS で
@@ -87,30 +87,30 @@ revision で同じ件数や coverage を確認したことを意味しない。
 同一 host に bridge と Lore Server を構築し、Windows client を接続する場合は、
 次の順に進める。
 
-1. [lore-auth-bridge 構築手順](setup/auth-bridge-setup.md) — bridge、Entra ID、TLS、nginx の構築。
-2. [Lore Server 構築手順](setup/server-setup.md) — Lore Server の構築と client からの接続確認。
-3. [Windows CLI インストール手順](setup/windows-cli-setup.md) — client の配置、証明書、初回接続。
+1. [lore-auth-bridge 構築手順](setup/001-auth-bridge-setup.md) — bridge、Entra ID、TLS、nginx の構築。
+2. [Lore Server 構築手順](setup/002-server-setup.md) — Lore Server の構築と client からの接続確認。
+3. [Windows CLI インストール手順](setup/003-windows-cli-setup.md) — client の配置、証明書、初回接続。
 
 その他の構成:
 
-- [Identity Provider と招待](setup/identity-providers.md) — Google、Entra ID、Keycloak と binding。
-- [Tailscale 構成](setup/tailscale.md) — private mesh での endpoint と trust。
-- [IdP を使わないローカル検証](setup/local-auth-quickstart.md) — 手動 token を使う検証の流れ。
+- [Identity Provider と招待](setup/004-identity-providers.md) — Google、Entra ID、Keycloak と binding。
+- [Tailscale 構成](setup/005-tailscale.md) — private mesh での endpoint と trust。
+- [IdP を使わないローカル検証](setup/006-local-auth-quickstart.md) — 手動 token を使う検証の流れ。
 
 ## 管理・運用
 
-- [TLS の確認と切り分け](operations/tls-troubleshooting.md) — certificate、trust、接続と更新。
+- [TLS の確認と切り分け](operations/001-tls-troubleshooting.md) — certificate、trust、接続と更新。
 - [管理 Web UI の設定と操作](admin-webtools/README.md) — 公開範囲の制限と管理操作。
-- [バックアップと復旧](operations/backup-recovery.md) — offline backup と復元試験。
-- [CI Service Account の設定](operations/ci-service-account.md) — runner の認証と権限。
-- [Lore Server / bridge の更新](operations/upgrade.md) — 更新、受入、rollback。
-- [token 発行と device flow](operations/token-flows.md) — 手動発行、Web token、device flow。
-- [bridge の開発・互換性検証](operations/bridge-validation.md) — build、test、E2E、claim contract。
+- [バックアップと復旧](operations/002-backup-recovery.md) — offline backup と復元試験。
+- [CI Service Account の設定](operations/003-ci-service-account.md) — runner の認証と権限。
+- [Lore Server / bridge の更新](operations/004-upgrade.md) — 更新、受入、rollback。
+- [token 発行と device flow](operations/005-token-flows.md) — 手動発行、Web token、device flow。
+- [bridge の開発・互換性検証](operations/006-bridge-validation.md) — build、test、E2E、claim contract。
 
 ## 利用者向け
 
-- [CLI の基本操作](guides/cli-usage.md) — login、clone、commit、push。
-- [lore-authctl の操作](guides/authctl.md) — 管理者向けの user、group、repository 権限。
+- [CLI の基本操作](guides/001-cli-usage.md) — login、clone、commit、push。
+- [lore-authctl の操作](guides/002-authctl.md) — 管理者向けの user、group、repository 権限。
 
 ## 資料の扱い
 

@@ -7,7 +7,7 @@ Windows から、登録済み repository を取得し変更を送るまでの手
 
 ## 1. login と一覧
 
-[Windows CLI のインストール](../setup/windows-cli-setup.md) と certificate trust が完了し、管理者が
+[Windows CLI のインストール](../setup/003-windows-cli-setup.md) と certificate trust が完了し、管理者が
 identity と repository grant を登録した状態で PowerShell を開く。`<...>` を実環境の値に替える。
 
 ```powershell
@@ -68,5 +68,5 @@ lore revision history --oneline 10
 ```
 
 利用可能な subcommand は `lore --help` と各 subcommand の `--help` で確認する。
-ログインや TLS error は [TLS の確認と切り分け](../operations/tls-troubleshooting.md)、権限の確認は
-管理者向け [authctl 手順](authctl.md) を参照する。token や secret を含む出力を共有しない。
+ログインや TLS error は [TLS の確認と切り分け](../operations/001-tls-troubleshooting.md)、権限の確認は
+管理者向け [authctl 手順](002-authctl.md) を参照する。token や secret を含む出力を共有しない。

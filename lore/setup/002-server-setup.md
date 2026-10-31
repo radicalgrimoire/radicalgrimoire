@@ -9,7 +9,7 @@ Ubuntu 26.04 LTS / x86_64 だが、この一般化した手順自体は別環境
 
 ## 0. 前提条件
 
-先に [lore-auth-bridge 構築手順](auth-bridge-setup.md) の手順 9 までを実施し、
+先に [lore-auth-bridge 構築手順](001-auth-bridge-setup.md) の手順 9 までを実施し、
 bridge と nginx が同じ host で稼働し、health / JWKS が正常であることを確認する。
 その手順で作成する service user `lore`、`/opt/lore`、`/datadrive/lore`、
 certificate と Rust toolchain を利用する。
@@ -160,14 +160,14 @@ HTTP health の成功だけでは gRPC の動作や client の trust は確認�
 
 ## 6. Windows client の初回接続
 
-[Windows CLI インストール手順](windows-cli-setup.md) に従い、互換性を確認した client の配置、
+[Windows CLI インストール手順](003-windows-cli-setup.md) に従い、互換性を確認した client の配置、
 certificate の信頼、Entra login と clone を確認する。ログインする利用者は先に
-[bridge の利用者登録](auth-bridge-setup.md#10-利用者登録と-repository-へのアクセス) で
-identity を登録する。接続に失敗した場合は [TLS の確認と切り分け](../operations/tls-troubleshooting.md) を参照する。
+[bridge の利用者登録](001-auth-bridge-setup.md#10-利用者登録と-repository-へのアクセス) で
+identity を登録する。接続に失敗した場合は [TLS の確認と切り分け](../operations/001-tls-troubleshooting.md) を参照する。
 
 ## 導入後
 
-bridge の [利用者登録](auth-bridge-setup.md#10-利用者登録と-repository-へのアクセス) で
+bridge の [利用者登録](001-auth-bridge-setup.md#10-利用者登録と-repository-へのアクセス) で
 identity binding と repository grant を設定してから、実 client で login と clone を確認する。
 CI の login や writer 操作は別途実行して確認する。DB、JWT signing key、Lore store、設定を
 同じ時点の recovery set として backup し、復元試験を行う。実機での作業は

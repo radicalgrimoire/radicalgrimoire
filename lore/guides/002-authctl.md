@@ -1,7 +1,7 @@
 # lore-authctl による利用者・権限管理
 
 旧 Authctl 資料と [実機の利用者登録記録](../work/server-193-account.md)
-を基にした操作例。例は [bridge 構築手順](../setup/auth-bridge-setup.md) の path と実行 user を使う。
+を基にした操作例。例は [bridge 構築手順](../setup/001-auth-bridge-setup.md) の path と実行 user を使う。
 既存環境の path、権限、対象 binary の revision を確認し、`<...>` を置き換える。
 
 > [!IMPORTANT]
@@ -54,7 +54,7 @@ subject が別 user に bind 済みなら上書きせず、対象の object ID �
 `required_tid` と異なる tenant を拒否する。同じ有効 user への同じ binding は冪等だが、
 別 user に紐付く subject や無効 user への binding は拒否される。binding と監査は同一
 transaction で確定する。email、UPN、表示名を永続 subject の代わりにしない。
-確認済み email を使う別の登録経路は [Identity Provider と招待](../setup/identity-providers.md)
+確認済み email を使う別の登録経路は [Identity Provider と招待](../setup/004-identity-providers.md)
 を参照する。
 
 ## 3. repository grant を設定・確認する
@@ -130,7 +130,7 @@ CI での実操作例と検証記録は [Service Account の作業記録](../wor
 ## 6. 手動 token 発行と管理者の復旧
 
 IdP を使わない検証や障害時の `token mint-authn` と repository scoped `token mint` は
-別の操作である。[token 発行と device flow](../operations/token-flows.md) で安全な出力先と取扱いを
+別の操作である。[token 発行と device flow](../operations/005-token-flows.md) で安全な出力先と取扱いを
 確認する。
 
 管理者を誤って無効化した場合は対象 DB と user を確認してから `user enable` で復旧する。

@@ -10,7 +10,7 @@ bridge の管理者が、許可された端末から管理 UI にアクセスす
   `admin.admin_emails` に管理者の email を設定している。
 - 管理者の有効な bridge user と IdP identity が登録済みで、ブラウザーから login できる。
   Entra の email claim が未検証の場合は、invitation だけに頼らず
-  [identity binding](../guides/authctl.md#2-entra-user-を登録する) を確認する。
+  [identity binding](../guides/002-authctl.md#2-entra-user-を登録する) を確認する。
 
 対象 revision では login 後も、有効 user の正規化済み email が管理者一覧と一致する必要が
 ある。管理 UI の管理者であることと repository の権限は別である。
