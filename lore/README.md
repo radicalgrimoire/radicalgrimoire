@@ -11,12 +11,18 @@ Lore の UCS Auth / ReBAC protocol を実装する `lore-auth-bridge` を整備�
 Entra ID と Lore を接続した。Entra ID の email claim が未検証で返る環境では、
 email を本人確認に使わず、管理者が `<tenant-id>:<object-id>` を user に事前に bind する。
 identity binding と audit log は transaction で同時確定し、同じ identity を別 user に
-紐付ける操作は拒否する。冪等な onboarding script も用意した。
+紐付ける操作は拒否する。当時の onboarding script は後に削除されており、現在は
+管理 UI または CLI で登録する。
 
 repository ごとに `reader` / `writer` / `admin` の権限を管理でき、
 サービスアカウント認証にも対応している。操作手順は
-[lore-authctl の操作](operations/authctl.md) と
+[lore-authctl の操作](guides/authctl.md) と
 [CI Service Account の設定](operations/ci-service-account.md) を参照する。
+
+bridge は登録済み identity に authn token を発行し、Lore CLI は repository 操作時に
+`UrcAuthApi` で短命の repository scoped authz token を取得する。Lore Server は JWKS で
+署名を検証し、`RebacApi` で repository の作成・削除を bridge に同期する。
+login の成功だけでは repository 権限は付与されない。
 
 ### TLS gRPC
 
@@ -48,7 +54,8 @@ cargo check -p lore-authctl
 cargo test -p lore-auth-adapters --test sqlite
 ```
 
-SQLite integration test は 24 件成功した。
+当時の SQLite integration test は 24 件成功した。これは記録当時の結果であり、現在の
+revision で同じ件数や coverage を確認したことを意味しない。
 
 ### 社内テスト運用
 
@@ -69,10 +76,8 @@ SQLite integration test は 24 件成功した。
 
 ## 今後の課題
 
-- identity binding の専用自動テストを追加する
-  - subject conflict
-  - disabled user
-  - audit 書き込み失敗時の rollback
+- identity binding の subject conflict、disabled user、audit 失敗時の rollback について、
+  使用する revision の自動テストと実機の coverage を確認する
 - 監視、バックアップ、復旧を含む運用設計を固める
 - テスト利用チームを通じて onboarding と権限管理の UX を検証する
 - Docker を補助導線として維持するか、host-native 運用に寄せるかを実運用の知見で判断する
@@ -86,18 +91,26 @@ SQLite integration test は 24 件成功した。
 2. [Lore Server 構築手順](setup/server-setup.md) — Lore Server の構築と client からの接続確認。
 3. [Windows CLI インストール手順](setup/windows-cli-setup.md) — client の配置、証明書、初回接続。
 
+その他の構成:
+
+- [Identity Provider と招待](setup/identity-providers.md) — Google、Entra ID、Keycloak と binding。
+- [Tailscale 構成](setup/tailscale.md) — private mesh での endpoint と trust。
+- [IdP を使わないローカル検証](setup/local-auth-quickstart.md) — 手動 token を使う検証の流れ。
+
 ## 管理・運用
 
 - [TLS の確認と切り分け](operations/tls-troubleshooting.md) — certificate、trust、接続と更新。
-- [lore-authctl の操作](operations/authctl.md) — user、group、repository 権限。
-- [管理 Web UI の設定と操作](operations/admin-ui.md) — 公開範囲の制限と管理操作。
+- [管理 Web UI の設定と操作](admin-webtools/README.md) — 公開範囲の制限と管理操作。
 - [バックアップと復旧](operations/backup-recovery.md) — offline backup と復元試験。
 - [CI Service Account の設定](operations/ci-service-account.md) — runner の認証と権限。
 - [Lore Server / bridge の更新](operations/upgrade.md) — 更新、受入、rollback。
+- [token 発行と device flow](operations/token-flows.md) — 手動発行、Web token、device flow。
+- [bridge の開発・互換性検証](operations/bridge-validation.md) — build、test、E2E、claim contract。
 
 ## 利用者向け
 
 - [CLI の基本操作](guides/cli-usage.md) — login、clone、commit、push。
+- [lore-authctl の操作](guides/authctl.md) — 管理者向けの user、group、repository 権限。
 
 ## 資料の扱い
 

@@ -50,6 +50,13 @@ subject が別 user に bind 済みなら上書きせず、対象の object ID �
 一時停止・再有効化は対象 revision の `user disable --help` / `user enable --help` を確認し、
 対象と影響を確認してから行う。
 
+対象 revision の `entra_oid_tid` は token の `tid` と `oid` を subject とし、設定された
+`required_tid` と異なる tenant を拒否する。同じ有効 user への同じ binding は冪等だが、
+別 user に紐付く subject や無効 user への binding は拒否される。binding と監査は同一
+transaction で確定する。email、UPN、表示名を永続 subject の代わりにしない。
+確認済み email を使う別の登録経路は [Identity Provider と招待](../setup/identity-providers.md)
+を参照する。
+
 ## 3. repository grant を設定・確認する
 
 repository が登録済みであることを確認し、必要な最小 role を付与する。
@@ -68,6 +75,12 @@ sudo -u lore /opt/lore/bin/lore-authctl \
 `check` の `allow` を確認する。結果は bridge の認可判定であり、実際の client による login、
 clone、必要に応じた承認済み場所への write の確認とは別である。grant を外すときは
 `grant remove --help`、対象 grant、影響範囲を確認してから実行する。
+
+通常は Lore Server の ReBAC `CreateResource` により repository が bridge に登録される。
+JWT の `resources[].resource_id` は repository 名ではなく `urc-{lore_repository_id}`。
+`admin` は他人の lock 解除以外の操作も許可する可能性があるため、信頼できる主体に限定する。
+grant 変更は発行済み authz token を即時失効させない。新しい認可情報を取得し、
+対象 revision で実際の権限を確認する。
 
 ## 4. group と runner の CIDR
 
@@ -97,6 +110,11 @@ sudo -u lore /opt/lore/bin/lore-authctl \
 network 判定には、nginx が実際の接続元を trusted proxy metadata として渡す必要がある。
 実機例と失敗時の CIDR 修正は [215 の作業記録](../work/server-215-20261022-03.md) を参照する。
 
+対象 revision では IPv4 / IPv6 の単一 address は `/32` / `/128` として登録され、
+適用される group の CIDR は合算される。適用 CIDR が一つもない通常 user の login には
+IP 制限がないが、Service Account の認証には一致する CIDR が必要である。変更は発行済み
+token を無効化しない。
+
 ## 5. Service Account と secret
 
 対象 revision の `service-account add --help` と `rotate --help` を確認する。
@@ -108,3 +126,14 @@ credential store 更新後に login と clone を確認する。
 CI での実操作例と検証記録は [Service Account の作業記録](../work/server-193-service-account.md)
 を参照する。手動 token 発行も credential を生成するため、必要な検証環境でのみ使い、
 対象 revision の `--help` と出力先を確認する。
+
+## 6. 手動 token 発行と管理者の復旧
+
+IdP を使わない検証や障害時の `token mint-authn` と repository scoped `token mint` は
+別の操作である。[token 発行と device flow](../operations/token-flows.md) で安全な出力先と取扱いを
+確認する。
+
+管理者を誤って無効化した場合は対象 DB と user を確認してから `user enable` で復旧する。
+IdP 障害時も host 上の管理 CLI を使った管理変更は可能で、対象 revision の CLI 書き込みは
+監査付き adapter を通る。完全な disaster recovery を保証する手順ではないため、事前に
+対象 revision と承認済み運用で検証する。

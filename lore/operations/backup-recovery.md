@@ -28,6 +28,18 @@ filesystem mount、nginx の関連設定も洗い出し、復旧に必要な ver
 SQLite は WAL mode の場合があるため、DB file 単体でなく `-wal` / `-shm` を含む directory を
 保存する。
 
+bridge の DB には公開 JWK、鍵 metadata と private key path が保存され、private key 自体は
+`jwt.signing_key_dir` にある。鍵 ID と `jwt.active_kid` の整合性を保ち、鍵 directory と
+DB を同じ recovery set に含める。bridge は authn / authz token を RS256 で署名し、
+Lore Server は JWKS から公開鍵を取得する。
+旧 bridge 文書の対象 revision は authz token の TTL を 15 分と説明しているが、対象 revision
+と発行方法で確認する。鍵生成 command も revision により異なるため、既存鍵を再生成する前に
+`--help` と影響を確認する。
+
+live backup で稼働中の main DB file を単純コピーしてはならない。SQLite の `.backup` または
+`VACUUM INTO` を使い、鍵 directory や Lore store との整合性を別途確保する。下記は offline
+backup であり、live backup は対象環境で一貫性と復元を検証するまでは実証済み手順としない。
+
 ## 2. 停止と backup
 
 1. 利用者と CI に停止を通知し、network からの新規アクセスを止める。

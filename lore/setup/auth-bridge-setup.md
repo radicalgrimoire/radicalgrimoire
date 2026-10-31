@@ -31,6 +31,11 @@ Ubuntu host に `lore-auth-bridge` と nginx を配置し、Microsoft Entra ID �
 SQLite database は NFS、SMB、object storage に置かない。mount が利用できない状態で
 ローカルの空 directory に store を作らないこと。
 
+bridge、Lore Server、reverse proxy は別 host に分けることもできる。その場合は network
+boundary、永続化と recovery の責任分界を別途設計する。Lore の local store は immutable /
+mutable の双方を永続化する。cloud backend は使用 binary の対応を確認し、clone / pull の
+転送量と egress cost も評価する。Lore の AWS 例は S3 単独ではなく S3 と DynamoDB を使う。
+
 | 接続先 | 用途 |
 | --- | --- |
 | `lore://<SERVER_HOST>:41337` | Lore client |
@@ -94,6 +99,11 @@ install -d -m 0755 "$HOME/src"
 
 実機では `radicalgrimoire` の fork を利用している。Entra identity binding、callback 対応を
 含み、Lore Server と互換性のある revision を選ぶ。最新 `main` が同じ動作をするとは限らない。
+
+bridge には server、管理 CLI のほか、Lore binary の JWT claim contract を確認する
+`lore-claimprobe` がある。旧 bridge 文書は Lore CLI / Server `0.8.4+283` の通し検証を
+報告しているが、すべての revision の互換性を保証しない。
+[開発・互換性検証](../operations/bridge-validation.md) も参照する。
 
 ```bash
 source "$HOME/.cargo/env"
@@ -186,15 +196,19 @@ sudo bash "$HOME/src/lore-auth-bridge/scripts/verify-entra-client-secret.sh" \
 権限、ネットワークも確認する。Secret の更新時は新しい Value を別ファイルで検証し、
 旧 Secret と復旧手段を確保してから置き換える。bridge は起動時に読み込むため、再起動後に
 実際の login と Lore 操作を確認する。旧 Secret は切り替え成功まで失効させない。
+更新用 file は制限された別 file に置いて検証し、同一 filesystem 上で原子的に置き換える。
+所有権・権限と service user の読み取りを再確認し、失敗時に旧 file を復元できるようにする。
 
 ## 6. bridge 設定
 
 `/opt/lore/config/lore-auth.yaml` を作成し、すべての `<...>` を置き換える。
 以下は実機で使った revision の設定例である。
+対象 revision の bridge は各設定 object の未知の key を parse error として扱う。
+使用 binary の schema に合わせ、綴り間違いや未対応の key を残さない。
 
 > [!WARNING]
 > この例の `admin_emails` は管理 UI を有効にする。nginx の例には管理画面専用の
-> 送信元制限がないため、公開前に [管理 Web UI の設定と操作](../operations/admin-ui.md) に従って
+> 送信元制限がないため、公開前に [管理 Web UI の設定と操作](../admin-webtools/README.md) に従って
 > 管理 endpoint のアクセス制限を確認する。使用しない場合は `admin_emails` を空にする。
 
 ```yaml
@@ -310,6 +324,18 @@ server {
 verification のみを無効にする。外部 client の TLS verification は無効化しない。
 `x-lore-client-ip` は実機で Service Account 対応時に追加した設定である。bridge 側で
 loopback の trusted proxy からの metadata のみを受け付ける構成を確認する。
+
+`RebacApi` は Lore Server の resource lifecycle sync 用であり、stock Lore Server の
+ReBAC client は service token metadata を送らないと旧資料に記録されている。
+`rebac_allowed_peer_cidrs` が空の場合、対象 revision は loopback peer のみを許可する。
+proxy の背後では bridge が直接見る peer は proxy なので、上記のように edge でも実際の
+Lore Server 送信元を制限し、許可・拒否の両方を検証する。
+
+公開される `/api/device/start`、`/api/device/token`、`/auth/{provider}/start` と
+gRPC `/epic_urc.UrcAuthApi/StartAuthSession` は edge 側でも rate limit する。
+bridge の per-peer 制限は多層防御であり、proxy の背後では edge の代替にならない。
+proxy access log では OAuth code、device user code、login session nonce、token を含む
+query string や機密 path を除外または redact し、ログ共有前にも機密情報を確認する。
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/lore-auth /etc/nginx/sites-enabled/lore-auth

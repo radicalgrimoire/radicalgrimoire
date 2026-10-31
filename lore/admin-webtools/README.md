@@ -1,8 +1,17 @@
-# bridge 管理 Web UI の設定と操作
+# bridge 管理 Web UI
 
 旧管理 UI 資料を基にした手順。`/admin` の動作や内部 API は
 bridge revision に依存する。この手順と例の access 制限は一般化したものであり、
 実環境での通し検証は未実施。変更前に使用 revision の実装と現在の nginx 設定を確認する。
+
+## ドキュメント
+
+- [管理 UI へのログイン](login.md) — 管理者の準備とログイン。
+- [repository](repositories.md) — 一覧、作成、権限、無効化。
+- [user](users.md) — 登録、Entra identity、直接権限。
+- [group](groups.md) — member と許可接続元。
+- [管理ツール設定](settings.md) — Service Account、権限判定。
+- [メンテナンスモード](maintenance.md) — 新規 token 発行の停止と注意事項。
 
 ## 1. 利用前の確認
 
@@ -64,7 +73,7 @@ sudo systemctl is-active nginx
 許可外から UI や管理操作に到達できる場合は公開しない。意図した login、JWKS、gRPC も
 引き続き動作することを確認する。
 
-## 3. UI にログインする
+## 3. 管理者を設定する
 
 公開側の制限が整ったら、`/opt/lore/config/lore-auth.yaml` の `admin` section に
 管理者の email を設定する。構築例にすでに設定済みの場合は重複させない。
@@ -84,17 +93,10 @@ sudo systemctl is-active lore-auth
 sudo journalctl -u lore-auth -n 100 --no-pager
 ```
 
-1. 許可された管理端末から、構築環境の OIDC login flow で Entra ID にサインインする。
-2. 同じ browser session で `https://<SERVER_HOST>:8080/admin` を開く。
-3. 非管理者が同じ画面にアクセスできないことを確認する。旧資料では未認証および非 admin は
-   404 を返すが、実際の応答は使用 revision で確認する。
+管理 UI の管理者というだけでは repository 権限は付与されない。
+`admin.global_repository_admin` を明示的に有効にすると、該当する有効な管理者に全有効
+repository の read / write / admin が暗黙に付与され、DB grant は作られない。
+対象は信頼できる管理者に限定し、設定変更後に server を再起動する。設定を戻しても
+発行済み authz token は期限まで有効である。
 
-UI では user、group、repository、grant の確認・管理や access 判定の確認ができる。
-機能と画面は revision に依存する。Entra の email claim が未検証の場合は、invitation だけに
-頼らず [authctl による identity binding](authctl.md#2-entra-user-を登録する) を行う。
-
-## 4. 変更後の確認
-
-対象 user と repository、role、group を再確認し、bridge の `check` と実 client での login /
-clone を必要に応じて実施する。操作の audit 記録を確認し、機密情報をログや問い合わせに添付しない。
-UI が使えなくなった場合は、公開制限を解除せず、service log、管理者設定、network と IdP を調査する。
+設定後は [ログイン手順](login.md) に進む。

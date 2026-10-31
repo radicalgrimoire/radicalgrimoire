@@ -44,6 +44,8 @@ sudo journalctl -u lore-auth -u loreserver -n 100 --no-pager
 `Failed to connect to rebac service` になる例を記録している。署名済み leaf を
 `SSL_CERT_FILE` に指定していないか、Lore Server 側のログ・CA・gRPC 接続先を確認する。
 これは原因の一例であり、同じエラーの原因が常に TLS とは限らない。
+特に `lore auth login --token` は token のローカル保存だけの場合があり、bridge への gRPC
+接続が成功したことを意味しない。
 
 ## 3. Windows client / runner から確認する
 

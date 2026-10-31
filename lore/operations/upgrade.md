@@ -17,6 +17,13 @@
 更新後に新しい data が書かれた場合、旧 backup への復元ではその後の変更が失われる。
 SQLite migration を含む bridge 更新も、単純に旧 binary を戻せると仮定しない。
 
+特に bridge `b332e35` の `phase7_remove_existing_group_nests_20261030` migration は、
+server または authctl が DB を開く際に既存の group 間所属を一度解除して監査する。
+対象 revision では UI / CLI から nested group を新規作成できない。更新前に DB を backup し、
+継承していた repository grant と Service Account の許可 CIDR を洗い出し、必要な直接所属・
+権限を計画する。残存する関係は管理 UI または `group nest remove` で解除できる。
+発行済み token は取り消されない。実際の migration は対象 revision で確認する。
+
 ## 2. 新 binary の準備
 
 信頼済み配布物または source revision から、運用中の binary とは別 directory に準備する。

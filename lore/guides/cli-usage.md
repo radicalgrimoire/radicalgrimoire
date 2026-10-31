@@ -69,4 +69,4 @@ lore revision history --oneline 10
 
 利用可能な subcommand は `lore --help` と各 subcommand の `--help` で確認する。
 ログインや TLS error は [TLS の確認と切り分け](../operations/tls-troubleshooting.md)、権限の確認は
-管理者向け [authctl 手順](../operations/authctl.md) を参照する。token や secret を含む出力を共有しない。
+管理者向け [authctl 手順](authctl.md) を参照する。token や secret を含む出力を共有しない。
