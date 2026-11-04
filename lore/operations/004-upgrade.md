@@ -1,12 +1,13 @@
-# Lore Server / bridge の更新
+# Lore Server の更新
 
-[Lore Server 更新記録](../work/server-193-update.md) と
-[bridge 更新記録](../work/server-215-20261022-01.md) を基にした同一 host 向けの手順。
-実環境により service 名、path、DB migration、wire 互換性は異なる。一般化した手順は未検証。
+[Lore Server 更新記録](../work/server-193-update.md) を基にした、bridge と同一 host に
+配置した Lore Server の更新手順。bridge を更新する場合は
+[bridge の更新](007-bridge-upgrade.md) を参照する。
+実環境により service 名、path、store migration、wire 互換性は異なる。一般化した手順は未検証。
 
 ## 1. 更新前の確認
 
-1. 対象の Lore / bridge / Windows CLI revision、release note、wire・token store・SQLite / store
+1. 対象の Lore / bridge / Windows CLI revision、release note、wire・token store・store
    migration の互換性を確認する。公式版と fork が同じ機能を持つと決めつけない。
 2. 更新前後の binary、checksum、rollback 条件、停止時間、影響範囲を確認する。
 3. 更新後の受入用 user と repository、CI runner を用意する。write 試験は専用 repository または
@@ -15,14 +16,6 @@
    作る。**以下の切替は、backup 完了後も `loreserver` と `lore-auth` が停止している状態で行う。**
 
 更新後に新しい data が書かれた場合、旧 backup への復元ではその後の変更が失われる。
-SQLite migration を含む bridge 更新も、単純に旧 binary を戻せると仮定しない。
-
-特に bridge `b332e35` の `phase7_remove_existing_group_nests_20261030` migration は、
-server または authctl が DB を開く際に既存の group 間所属を一度解除して監査する。
-対象 revision では UI / CLI から nested group を新規作成できない。更新前に DB を backup し、
-継承していた repository grant と Service Account の許可 CIDR を洗い出し、必要な直接所属・
-権限を計画する。残存する関係は管理 UI または `group nest remove` で解除できる。
-発行済み token は取り消されない。実際の migration は対象 revision で確認する。
 
 ## 2. 新 binary の準備
 
@@ -38,40 +31,24 @@ git checkout --detach <LORE_REVISION>
 git rev-parse HEAD
 source "$HOME/.cargo/env"
 cargo build --release -p lore-client --bin lore -p lore-server --bin loreserver
-
-cd "$HOME/src/lore-auth-bridge"
-git status --short
-git fetch --prune origin
-# clean なことを確認してから <BRIDGE_REVISION> を置き換える
-git checkout --detach <BRIDGE_REVISION>
-git rev-parse HEAD
-cargo build --release -p lore-auth-server -p lore-authctl
 ```
 
-変更しない側の build は省略する。作業 tree が clean でない場合は checkout せず、変更の所有者と
+作業 tree が clean でない場合は checkout せず、変更の所有者と
 対応を決める。build に失敗した場合、稼働 binary を切り替えない。
 
 ## 3. binary の切替
 
-各 source path と権限を確認し、更新する component だけを配置する。例は構築手順の path を使う。
+各 source path と権限を確認し、Lore の binary を配置する。例は構築手順の path を使う。
 旧 binary は recovery set に保存済みであることを確認する。
 
 ```bash
-# Lore を更新する場合
 sudo install -o root -g root -m 0755 \
   "$HOME/src/lore/target/release/lore" /opt/lore/bin/lore
 sudo install -o root -g root -m 0755 \
   "$HOME/src/lore/target/release/loreserver" /opt/lore/bin/loreserver
-
-# bridge を更新する場合
-sudo install -o root -g root -m 0755 \
-  "$HOME/src/lore-auth-bridge/target/release/lore-auth-server" /opt/lore/bin/lore-auth-server
-sudo install -o root -g root -m 0755 \
-  "$HOME/src/lore-auth-bridge/target/release/lore-authctl" /opt/lore/bin/lore-authctl
 ```
 
 各 install の成功を確認する。一部が失敗した場合は service を起動せず、状態を調査する。
-bridge の SQLite migration が後方互換と実証されている場合を除き、binary だけの rollback はしない。
 
 ## 4. 起動と受入
 

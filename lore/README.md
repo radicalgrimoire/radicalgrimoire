@@ -106,7 +106,8 @@ revision で同じ件数や coverage を確認したことを意味しない。
 - [管理 Web UI の設定と操作](admin-webtools/README.md) — 公開範囲の制限と管理操作。
 - [バックアップと復旧](operations/002-backup-recovery.md) — offline backup と復元試験。
 - [CI Service Account の設定](operations/003-ci-service-account.md) — runner の認証と権限。
-- [Lore Server / bridge の更新](operations/004-upgrade.md) — 更新、受入、rollback。
+- [Lore Server の更新](operations/004-upgrade.md) — server の更新、受入、rollback。
+- [lore-auth-bridge の更新](operations/007-bridge-upgrade.md) — bridge の更新、受入、rollback。
 - [token 発行と device flow](operations/005-token-flows.md) — 手動発行、Web token、device flow。
 - [bridge の開発・互換性検証](operations/006-bridge-validation.md) — build、test、E2E、claim contract。
 

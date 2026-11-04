@@ -17,5 +17,5 @@ View access で許可接続元 IP / CIDR の一覧・追加・解除ができる
 認証には一致する CIDR が必要である。変更は発行済み token を無効化しない。
 
 対象 revision は nested group を新規作成できない。既存の group 間所属の migration と
-更新前の確認事項は [更新手順](../operations/004-upgrade.md#1-更新前の確認) を参照する。
+更新前の確認事項は [bridge の更新手順](../operations/007-bridge-upgrade.md#1-更新前の確認) を参照する。
 変更後は対象と監査記録を確認し、必要に応じて実 client でも確認する。
