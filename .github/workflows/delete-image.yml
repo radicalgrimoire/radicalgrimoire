@@ -40,10 +40,11 @@ jobs:
       - name: Delete existing image version
         if: ${{ !inputs.cleanup_untagged }}
         uses: actions/github-script@v8
+        with:
+          retries: 3
         env:
           IMAGE_NAME: ${{ steps.build.outputs.image_name }}
           VERSION: ${{ inputs.version }}
-        with:
           script: |
             const { data: repository } = await github.rest.repos.get(context.repo);
             const isOrganization = repository.owner.type === 'Organization';
@@ -85,10 +86,11 @@ jobs:
       - name: Delete untagged images
         if: ${{ inputs.cleanup_untagged }}
         uses: actions/github-script@v8
+        with:
+          retries: 3
         env:
           IMAGE_NAME: ${{ steps.build.outputs.image_name }}
           REGISTRY_TOKEN: ${{ github.token }}
-        with:
           script: |
             const { data: repository } = await github.rest.repos.get(context.repo);
             const isOrganization = repository.owner.type === 'Organization';
