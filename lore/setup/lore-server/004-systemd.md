@@ -30,6 +30,11 @@ ReadWritePaths=/datadrive/lore/store
 WantedBy=multi-user.target
 ```
 
+`--config` は TOML ファイルそのものではなく設定ディレクトリを指定し、`--env production` が
+環境名 `production` を選ぶ。この組み合わせにより、Lore Server は
+`/opt/lore/config/lore-server/production.toml` を組み込み設定への上書きとして読み込む。
+設定内容と作成手順は [Lore Server 設定](003-server-config.md) を参照。
+
 `RequiresMountsFor` は mount dependency を設定するが、意図した device が mount されているかの
 確認の代わりにはならない。service user が certificate を読め、store に書けることを確認する。
 各 `test` の成功を確認してから service を起動する。

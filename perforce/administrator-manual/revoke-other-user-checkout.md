@@ -4,27 +4,31 @@
 > 
 > https://kb.toyo.co.jp/wiki/pages/viewpage.action?pageId=17475859
 
+## p4 loginする
+
+```
+$ p4 -u ueno.s login
+Enter password: ***********
+
+User ueno.s logged in.
+```
+
 # ■ ファイルのチェックアウト状況の確認
 
 チェックアウトしているユーザーが、  
 どのワークスペースでロックを確保しているのか？を確認する
 
 ```
-p4 -u <perforceアカウント> -p <server:port> opened -a //...
+p4 -u `user` -p server:port opened -a //...
 ```
 
 # ■ ロックを解除する
 
 ```
-p4 -u <perforceアカウント> -p [server:port] revert -C [ワークスペース名] [ロックされているファイルのdepot上でのパス]
-```
+p4 -u `perforceアカウント` -p server:port revert -C workspace-name //depot/stream/file
 
 ## フォルダ以下を指定して一括解除もできる
-
-`...` を使う事で、フォルダ以下を指定して一括解除もできる
-
-```
-p4 -u super -p server:port revert -C fuga_mypc_workspace_3342 //TestDepot/mainlne/...
+p4 -u `perforceアカウント` -p server:port revert -C workspace-name //depot/stream/...
 ```
 
 # ■ tips. shelveの解除失敗によるファイルロック
@@ -39,3 +43,6 @@ shelveの解除操作をする際に、
 ```
 p4 -u super -c workspace_client unlock -xf //TestDepot/mainlne/hoge.txt
 ```
+
+> 参考
+> https://kb.toyo.co.jp/wiki/pages/viewpage.action?pageId=17475859
