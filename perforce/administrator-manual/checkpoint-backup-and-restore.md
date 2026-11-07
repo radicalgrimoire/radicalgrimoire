@@ -38,5 +38,4 @@ p4d -r <p4root> -z -jr <checkpoint-name>.gz
 
 ## 関連資料
 
-* [db.have の復旧](db-have-recovery.md)
 * [Helix Core Server Administrator Guide](https://www.perforce.com/perforce/doc.current/manuals/p4sag/Content/P4SAG/Home-p4sag.html)

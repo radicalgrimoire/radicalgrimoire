@@ -75,7 +75,3 @@ p4 opened -a //depot/path/to/file
 
 誰が開いているかを確認できます。
 P4V だけで運用する場合は CLI の使用は必須ではありません。
-
-# 関連
-
-- [ファイル／フォルダの移動](move-files-and-folders.md)
