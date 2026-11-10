@@ -49,3 +49,19 @@ I object only to being held hostage by it.
 
 This is my resolve.
 
+## lore-chronicler
+
+Lore is a version control system for large projects and the people who make them.
+At present, those people are expected to be comfortable talking to it through a command line.
+
+Some are.
+Others would prefer to see their files, select the ones they changed, and press a button.
+
+Chronicler is an early-stage Windows desktop client for Lore.
+It brings cloning, staging, commits, pushes, and file locks into a workspace with an actual window.
+
+The command line remains perfectly capable.
+The window is merely an admission that humans are also part of the infrastructure.
+
+
+
