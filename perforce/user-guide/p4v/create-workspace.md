@@ -1,6 +1,6 @@
 ﻿# ① Basic の 設定項目
 
-![create-workspace-01.png](../../../images/perforce/user-guide/p4v/create-workspace/create-workspace-01.png)
+![create-workspace-01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/create-workspace/create-workspace-01.png)
 
 ### ■ `Workspace name` の 設定
 任意の名前をつける
@@ -13,13 +13,13 @@ GitやSVNで言う所のブランチに関しての設定
 
 # ② タブ切り替えてAdvancedの設定編集に切り替える
 
-![create-workspace-02.png](../../../images/perforce/user-guide/p4v/create-workspace/create-workspace-02.png)
+![create-workspace-02.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/create-workspace/create-workspace-02.png)
 
 次の設定項目に切り替える
 
 # ③ Advanced の 設定項目
 
-![create-workspace-03.png](../../../images/perforce/user-guide/p4v/create-workspace/create-workspace-03.png)
+![create-workspace-03.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/create-workspace/create-workspace-03.png)
 
 * `File Options` の 設定
 Moditime と Rmdir にチェックを入れる

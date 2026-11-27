@@ -7,10 +7,10 @@
 * 戻したいファイルの大元のフォルダを選択している状態で右クリック 
 * GetRevisionを押す
 
-![force-get-revision-01.png](../../../images/perforce/user-guide/p4v/force-get-revision/force-get-revision-01.png)
+![force-get-revision-01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/force-get-revision/force-get-revision-01.png)
 
 # Optionsの設定にチェックをつける
 
 * Force Operationにチェックをつけて、Get Revisionを押す
 
-![force-get-revision-02.png](../../../images/perforce/user-guide/p4v/force-get-revision/force-get-revision-02.png)
+![force-get-revision-02.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/force-get-revision/force-get-revision-02.png)

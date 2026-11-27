@@ -1,4 +1,4 @@
-﻿![connect-to-server-01.png](../../../images/perforce/user-guide/p4v/connect-to-server/connect-to-server-01.png)
+﻿![connect-to-server-01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/connect-to-server/connect-to-server-01.png)
 
 ### ■ Server
 
@@ -14,7 +14,7 @@ Perforceアカウントを入力する
 
 
 ## Trust This Fingerprintが表示されたら…？
-![connect-to-server-02.png](../../../images/perforce/user-guide/p4v/connect-to-server/connect-to-server-02.png)
+![connect-to-server-02.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/connect-to-server/connect-to-server-02.png)
 
 Trust This Fingerprintにチェックを入れて、OKを押す
 

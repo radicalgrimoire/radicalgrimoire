@@ -7,7 +7,7 @@ SVNやGitと違って、Windowsエクスプローラー上でファイル移動�
 
 # Rename/move...を選択
 
-![move-files-and-folders-01.png](../../../images/perforce/user-guide/p4v/move-files-and-folders/move-files-and-folders-01.png)
+![move-files-and-folders-01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/move-files-and-folders/move-files-and-folders-01.png)
 
 変更したいフォルダを選択した上で、Rename/move...を選択します
 
@@ -15,7 +15,7 @@ SVNやGitと違って、Windowsエクスプローラー上でファイル移動�
 
 # Rename/Move で変更する
 
-![move-files-and-folders-02.png](../../../images/perforce/user-guide/p4v/move-files-and-folders/move-files-and-folders-02.png)
+![move-files-and-folders-02.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/move-files-and-folders/move-files-and-folders-02.png)
 
 ## ファイル名を変更する場合
 

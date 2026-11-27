@@ -2,24 +2,24 @@
 
 ### ■ Environment Settings の確認
 
-![configure-p4v-01.png](../../../images/perforce/user-guide/p4v/configure-p4v/configure-p4v-01.png)　
-![configure-p4v-02.png](../../../images/perforce/user-guide/p4v/configure-p4v/configure-p4v-02.png)
+![configure-p4v-01.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/configure-p4v/configure-p4v-01.png)　
+![configure-p4v-02.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/configure-p4v/configure-p4v-02.png)
 
 ※ helix-p4d サーバー管理者に要確認
 文字コードは、helix-p4dを構築しているサーバーに合わせる事
 
 ### ■ choose Character Encording の確認
 
-![configure-p4v-03.png](../../../images/perforce/user-guide/p4v/configure-p4v/configure-p4v-03.png)　
-![configure-p4v-04.png](../../../images/perforce/user-guide/p4v/configure-p4v/configure-p4v-04.png)
+![configure-p4v-03.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/configure-p4v/configure-p4v-03.png)　
+![configure-p4v-04.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/configure-p4v/configure-p4v-04.png)
 
 ※ helix-p4d サーバー管理者に要確認
 文字コードは、helix-p4dを構築しているサーバーに合わせる事
 
 ## 起動時の設定
 
-![configure-p4v-05.png](../../../images/perforce/user-guide/p4v/configure-p4v/configure-p4v-05.png)　
-![configure-p4v-06.png](../../../images/perforce/user-guide/p4v/configure-p4v/configure-p4v-06.png)
+![configure-p4v-05.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/configure-p4v/configure-p4v-05.png)　
+![configure-p4v-06.png](https://raw.githubusercontent.com/radicalgrimoire/radicalgrimoire/refs/heads/main/images/perforce/user-guide/p4v/configure-p4v/configure-p4v-06.png)
 
 複数のプロジェクトを兼務する場合や、環境の切り替えをスムーズにするための設定です。
 
