@@ -1,0 +1,54 @@
+# Lore Server の systemd と起動
+
+先に [前提条件](README.md) と [Lore Server 設定](003-server-config.md) を確認する。
+
+`/etc/systemd/system/loreserver.service`:
+
+```ini
+[Unit]
+Description=Lore server
+After=network-online.target lore-auth.service nginx.service
+Wants=network-online.target lore-auth.service nginx.service
+RequiresMountsFor=/datadrive
+ConditionPathIsMountPoint=/datadrive
+
+[Service]
+Type=simple
+User=lore
+Group=lore
+WorkingDirectory=/opt/lore
+Environment=SSL_CERT_FILE=/opt/lore/certs/lore-server.crt
+ExecStart=/opt/lore/bin/loreserver --config /opt/lore/config/lore-server --env production
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/datadrive/lore/store
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`--config` は TOML ファイルそのものではなく設定ディレクトリを指定し、`--env production` が
+環境名 `production` を選ぶ。この組み合わせにより、Lore Server は
+`/opt/lore/config/lore-server/production.toml` を組み込み設定への上書きとして読み込む。
+設定内容と作成手順は [Lore Server 設定](003-server-config.md) を参照。
+
+`RequiresMountsFor` は mount dependency を設定するが、意図した device が mount されているかの
+確認の代わりにはならない。service user が certificate を読め、store に書けることを確認する。
+各 `test` の成功を確認してから service を起動する。
+
+`SSL_CERT_FILE` は自己署名証明書を使う社内 IP の例。
+DNS / TLS では社内 CA と公開 CA の両方を含む OS CA bundle を用意し、
+`/etc/ssl/certs/ca-certificates.crt` に変更する。bridge も同じ接続先を検証できる必要がある。
+
+```bash
+sudo -u lore test -r /opt/lore/certs/lore-server.key
+sudo -u lore test -w /datadrive/lore/store
+sudo systemctl daemon-reload
+sudo systemctl enable --now loreserver
+```
+
+次は [server の受入確認](005-acceptance.md)。

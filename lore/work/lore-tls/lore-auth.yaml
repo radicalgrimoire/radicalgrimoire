@@ -1,0 +1,61 @@
+# 社内向けの構成例。<...> は環境に合わせて置き換える。
+# client secret や JWT 署名秘密鍵の値はこのファイルに書かない。
+
+server:
+  # bridge は直接公開せず、Nginx が外部との TLS を終端する。
+  listen: "127.0.0.1:18080"
+  grpc_listen: "127.0.0.1:18081"
+  grpc_tls_cert_file: "/datadrive/lore/certs/lore-server.crt"
+  grpc_tls_key_file: "/datadrive/lore/certs/lore-server.key"
+  public_base_url: "https://172.20.11.216:8080"
+
+identity_providers:
+  default: entra
+  providers:
+    entra:
+      type: oidc
+      profile: entra
+      display_name: "Microsoft Entra ID"
+      issuer: "https://login.microsoftonline.com/<TENANT_ID>/v2.0"
+      client_id: "<CLIENT_ID>"
+      client_secret_file: "/datadrive/lore/auth/entra-client-secret"
+      redirect_url: "https://172.20.11.216:8080/auth/entra/callback"
+      scopes: [openid, email, profile]
+      pkce: required
+      subject:
+        strategy: entra_oid_tid
+        required_tid: "<TENANT_ID>"
+      trust:
+        # 招待によるメールの自動紐付けは使わない。事前に identity を直接 bind する。
+        email_binding: disabled
+
+database:
+  path: "/datadrive/lore/auth/data/lore-auth.sqlite3"
+
+authz:
+  backend: rebac
+
+jwt:
+  issuer: "https://172.20.11.216:8080"
+  audience: ["lore-service", "172.20.11.216"]
+  ttl_seconds: 32400
+  signing_key_dir: "/datadrive/lore/auth/keys"
+  active_kid: "lore-216-01"
+
+lore:
+  # 現在の bridge は default_remote_url に lores:// を受け付けないため省略する。
+  # 省略時の CLI / クロニクラーの動作は実機で検証が必要。
+  auth_url: "https://172.20.11.216:8081"
+  # 管理画面から Lore Server の TLS 有効な gRPC に接続する。
+  repository_create_url: "https://127.0.0.1:41337"
+
+admin:
+  # 実際の管理者アカウントに置き換える。
+  admin_emails: ["<ADMIN_EMAIL>"]
+
+security:
+  device_code_ttl_seconds: 600
+  device_poll_interval_seconds: 3
+  session_ttl_seconds: 3600
+  # bridge から見た ReBAC 接続元は、同じホスト上の Nginx。
+  rebac_allowed_peer_cidrs: ["127.0.0.1/32", "::1/128"]

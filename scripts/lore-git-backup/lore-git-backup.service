@@ -1,0 +1,14 @@
+[Unit]
+Description=Copy Lore revisions to Git backup
+Wants=network-online.target
+After=network-online.target lore.service lore-auth-bridge.service
+
+[Service]
+Type=oneshot
+User=mgs
+Group=mgs
+Environment=HOME=/home/mgs
+ExecStart=/usr/local/libexec/lore-git-backup/backup.sh --config /etc/lore-git-backup/config.env
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

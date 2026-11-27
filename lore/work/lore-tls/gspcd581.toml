@@ -1,0 +1,43 @@
+# 社内向けの構成例。適用前に証明書、ネットワーク、接続先を確認する。
+
+[server.quic.certificate]
+# QUIC が提示するサーバー証明書と秘密鍵。
+cert_file = "/datadrive/lore/certs/lore-server.crt"
+pkey_file = "/datadrive/lore/certs/lore-server.key"
+
+[immutable_store.local]
+path = "/datadrive/lore/store"
+flush_delay_seconds = 10
+
+[mutable_store.local]
+path = "/datadrive/lore/store"
+flush_delay_seconds = 10
+
+[server.quic]
+# 41337/UDP は全 IPv4 インターフェースで待ち受ける。
+host = "0.0.0.0"
+
+[server.grpc]
+# 41337/TCP は全 IPv4 インターフェースで待ち受ける。
+host = "0.0.0.0"
+
+[server.grpc.certificate]
+# lores:// の gRPC に TLS を提供する。QUIC と同じ証明書を使う例。
+cert_file = "/datadrive/lore/certs/lore-server.crt"
+pkey_file = "/datadrive/lore/certs/lore-server.key"
+
+[server.http]
+# Lore Server の HTTP はサーバー自身からのみ利用する。
+host = "127.0.0.1"
+
+[environment.endpoint]
+# 社内クライアントにも通知される認証 gRPC の URL。
+auth_url = "https://172.20.11.216:8081"
+
+[server.auth]
+jwt_issuer = "https://172.20.11.216:8080"
+jwt_audience = ["lore-service", "172.20.11.216"]
+
+[server.auth.jwk]
+# JWKS は同一ホストの bridge から取得する。
+endpoint = "http://127.0.0.1:18080/.well-known/jwks.json"

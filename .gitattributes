@@ -1,0 +1,4 @@
+# Scripts and files deployed to Linux must retain LF line endings on every platform.
+/scripts/** text eol=lf
+/tech/LORE.md text eol=lf
+/tech/lore-*.md text eol=lf

@@ -1,0 +1,74 @@
+# Lore Server 設定
+
+先に [前提条件](README.md)、[build・配置](001-build.md)、
+[directory の作成](002-directories.md) を確認する。
+
+`/opt/lore/config/lore-server/production.toml` を作成する。このファイルが読み込まれる理由は、
+[systemd と起動](004-systemd.md) の `ExecStart` で `--config` に設定ディレクトリを、
+`--env` に `production` を指定しているためである。Lore Server は
+`<設定ディレクトリ>/<環境名>.toml` を探すので、この起動設定では
+`/opt/lore/config/lore-server/production.toml` が組み込み設定への上書きとして読み込まれる。
+client に返す `auth_url` には
+client から到達可能な public gRPC endpoint を設定する。loopback address を指定すると、client
+自身の loopback に接続して失敗する。JWT issuer と audience は bridge と一致させる。
+`auth_url` は bridge の gRPC TLS endpoint、`server.auth.jwk.endpoint` は HTTP の JWKS
+endpoint であり、互いに置き換えられない。audience は実際の remote host と `lore-service`
+を含める構成を、使用する revision で確認する。配布形態によっては、この environment TOML
+に加え `default.toml` が必要である。
+
+```toml
+[environment.endpoint]
+auth_url = "https://<SERVER_HOST>:8081"
+
+[server.quic.certificate]
+cert_file = "/opt/lore/certs/lore-server.crt"
+pkey_file = "/opt/lore/certs/lore-server.key"
+
+[server.quic]
+host = "0.0.0.0"
+
+[server.grpc]
+host = "0.0.0.0"
+
+[server.http]
+host = "127.0.0.1"
+
+[server.auth]
+jwt_issuer = "https://<SERVER_HOST>:8080"
+jwt_audience = ["lore-service", "<SERVER_HOST>"]
+
+[server.auth.jwk]
+endpoint = "http://127.0.0.1:18080/.well-known/jwks.json"
+
+[immutable_store.local]
+path = "/datadrive/lore/store"
+flush_delay_seconds = 10
+
+[mutable_store.local]
+path = "/datadrive/lore/store"
+flush_delay_seconds = 10
+```
+
+この例は社内 IP / plaintext: `[server.grpc.certificate]` を設定せず
+`lore://` を使う。gRPC の token を含む通信は暗号化されない。
+`0.0.0.0` は全 IPv4 interface を意味するため、network / firewall で許可範囲を制限する。
+
+DNS / TLS では、上記に以下を追加して `lores://<DNS_NAME>:41337` を使う。
+bridge の `repository_create_url` と各 process の CA 信頼も同時に変更する。
+この構成は [work の TLS 版](../../work/lore-tls/README.md) では未検証である。
+
+```toml
+[server.grpc.certificate]
+cert_file = "/opt/lore/certs/lore-server.crt"
+pkey_file = "/opt/lore/certs/lore-server.key"
+```
+
+bridge の issuer、audience、署名鍵、JWKS または auth endpoint の変更時は bridge と Lore Server の
+再起動要否を確認し、認証と repository 操作まで検証する。
+
+```bash
+sudo chown root:lore /opt/lore/config/lore-server/production.toml
+sudo chmod 0640 /opt/lore/config/lore-server/production.toml
+```
+
+次は [systemd と起動](004-systemd.md)。
